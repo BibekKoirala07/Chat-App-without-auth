@@ -1,7 +1,7 @@
 export interface Message {
   _id: string;
-  senderId: string; // This will be the ObjectId as a string from MongoDB
-  receiverId: string; // This will be the ObjectId as a string from MongoDB
+  senderId: string | { _id: string; name: string }; // This will be the ObjectId as a string from MongoDB
+  receiverId: string | { _id: string; name: string }; // This will be the ObjectId as a string from MongoDB
   content: string; // The content of the message
   chatId: string; // The chatId is also an ObjectId as a string
   isRead: boolean; // Boolean indicating if the message has been read

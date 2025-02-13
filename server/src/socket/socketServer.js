@@ -10,6 +10,7 @@ const handleActiveUsers = () => {
   for (let [userId, socketId] of connectedUserIdToSocketId.entries()) {
     arr.push(userId);
   }
+  console.log("arr", arr);
   return arr;
 };
 
@@ -37,6 +38,8 @@ module.exports = (io) => {
         const existingSocketId = connectedUserIdToSocketId.get(userId);
 
         if (existingSocketId) {
+          io.emit("active-users", handleActiveUsers());
+
           console.log("User already connected with socket:", existingSocketId);
           // Emit error to the current socket (avoid multiple connections for same user)
           socket.emit("error", {
@@ -96,6 +99,18 @@ module.exports = (io) => {
           chatId,
         });
 
+        await Chat.findByIdAndUpdate(
+          chatId,
+          {
+            latestMessage: {
+              content,
+              senderId,
+              timeStamp: new Date(),
+            },
+          },
+          { new: true }
+        );
+
         console.log("savedmessage", savedMessage);
 
         socket.emit("receive-message", savedMessage);
@@ -112,6 +127,19 @@ module.exports = (io) => {
         console.error("Error handling message:", error);
         socket.emit("message-error", "Failed to send message");
       }
+    });
+
+    socket.on("disconnect", () => {
+      // When a user disconnects, remove their entry from the map
+      for (let [userId, socketId] of connectedUserIdToSocketId.entries()) {
+        if (socketId === socket.id) {
+          connectedUserIdToSocketId.delete(userId);
+          console.log(`User ${userId} disconnected`);
+          break;
+        }
+      }
+
+      io.emit("active-users", handleActiveUsers());
     });
 
     io.emit("active-users", handleActiveUsers());

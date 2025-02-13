@@ -10,7 +10,7 @@ const LeftSideBox = ({
   users: any[];
   handleChatChange: (chatId: string) => void;
 }) => {
-  const { socket } = useSocket();
+  const { activeUsers } = useSocket();
 
   const [activeTab, setActiveTab] = useState("Friends");
 
@@ -117,7 +117,7 @@ const LeftSideBox = ({
                   {user.name.charAt(0)}
                 </span>
               </div>
-              {true && (
+              {activeUsers.includes(user._id) && (
                 <div
                   className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 
                               rounded-full ring-2 ring-white"
@@ -129,7 +129,7 @@ const LeftSideBox = ({
                               rounded-full flex items-center justify-center"
                 >
                   <span className="text-xs text-white font-medium">
-                    {user.unreadCount || 1}
+                    {user.unreadCount || 2}
                   </span>
                 </div>
               )}

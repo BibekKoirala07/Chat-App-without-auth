@@ -12,7 +12,7 @@ import EachMessage from "./EachMessage";
 const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
   const [messageText, setMessageText] = useState("");
 
-  const { socket, user } = useSocket();
+  const { socket, user, activeUsers } = useSocket();
   const { chatId } = useParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [page, setPage] = useState(1);
@@ -109,7 +109,9 @@ const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
               {selectedUser ? selectedUser.name : "Select a user"}
             </h2>
             <span className="text-sm text-gray-400">
-              {selectedUser ? "Active now" : "Not Active"}
+              {activeUsers.includes(user?._id ?? "")
+                ? "Active now"
+                : "Not Active"}
             </span>
           </div>
         </div>

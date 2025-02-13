@@ -39,16 +39,15 @@ userRoutes.get("/getUser", async (req, res) => {
 userRoutes.get("/getAllUsers/:id", async (req, res) => {
   try {
     const userId = req.params.id;
-    // console.log("Received userId:", userId);
 
+    // Fetch all users except the one who made the request
     const users = await User.find({ _id: { $ne: userId } }).lean();
-    // console.log("Fetched users:", users);
 
     const responseData = await Promise.all(
       users.map(async (user) => {
-        // Fetch chat where this user is a member along with the requester
+        // Fetch chat where both the user and the requester are members
         const chat = await Chat.findOne({
-          members: { $all: [userId, user._id.toString()] }, // Check if both users exist in a chat
+          members: { $all: [userId, user._id.toString()] },
         }).lean();
 
         return {
@@ -57,6 +56,7 @@ userRoutes.get("/getAllUsers/:id", async (req, res) => {
         };
       })
     );
+
     res.status(200).json({ success: true, data: responseData });
   } catch (error) {
     console.error("Error occurred:", error);

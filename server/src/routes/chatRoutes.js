@@ -10,7 +10,9 @@ chatRoutes.get("/:chatId/messages", async (req, res) => {
     const messages = await Message.find({ chatId })
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .populate("senderId", "name") // Populate sender details
+      .populate("receiverId", "name"); // Populate receiver details
 
     const totalMessages = await Message.countDocuments({ chatId });
 

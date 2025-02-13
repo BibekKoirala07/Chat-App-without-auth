@@ -15,6 +15,7 @@ interface SocketContextType {
   socket: Socket | null;
   user: User | null;
   connectSocket: (name: string) => void;
+  activeUsers: string[];
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -25,6 +26,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const savedUser = localStorage.getItem("chatUser");
     return savedUser ? JSON.parse(savedUser) : null;
   });
+  const [activeUsers, setActiveUsers] = useState<string[]>([]);
 
   // Add connection status tracking
   const [isConnected, setIsConnected] = useState(false);
@@ -63,13 +65,18 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     newSocket.on("connect", () => {
-      console.log("Connected to server:", newSocket.connected);
+      // console.log("Connected to server:", newSocket.connected);
       setIsConnected(true);
       newSocket.emit("setup", { name });
     });
 
+    newSocket.on("active-users", (data) => {
+      console.log("data", data);
+      setActiveUsers(data);
+    });
+
     newSocket.on("user-setup-complete", (userData: User) => {
-      console.log("User setup complete", userData);
+      // console.log("User setup complete", userData);
       if (userData) {
         localStorage.setItem("chatUser", JSON.stringify(userData));
         setUser(userData);
@@ -93,7 +100,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <SocketContext.Provider value={{ socket, user, connectSocket }}>
+    <SocketContext.Provider
+      value={{ socket, activeUsers, user, connectSocket }}
+    >
       {children}
     </SocketContext.Provider>
   );

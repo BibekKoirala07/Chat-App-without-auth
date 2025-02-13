@@ -20,11 +20,6 @@ const App = () => {
   const navigate = useNavigate();
   const { socket, connectSocket } = useSocket();
   const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeUsers, setActiveUsers] = useState([]);
-  const [error, setError] = useState<string | null>(null);
-
-  console.log(loading, error, activeUsers, setActiveUsers);
 
   const [selectedReceiver, setSelectedReceiver] = useState<string | null>("");
 
@@ -44,23 +39,15 @@ const App = () => {
     connectSocket(name);
   };
 
-  console.log("user", user);
-
   useEffect(() => {
-    socket?.on("active-users", (data) => {
-      console.log("data", data);
-    });
-  }, []);
-
-  useEffect(() => {
-    console.log("useEffect in users fetching");
+    // console.log("useEffect in users fetching");
     if (!user?._id) return;
-    console.log("useEffect in after fetching");
+    // console.log("useEffect in after fetching");
 
     const fetchUsers = async () => {
       try {
-        setLoading(true);
-        setError(null);
+        // setLoading(true);
+        // setError(null);
 
         const response = await fetch(
           `${backendURL}/api/users/getAllUsers/${user._id}`
@@ -74,9 +61,9 @@ const App = () => {
 
         setUsers(data.data); // Assuming the API returns { data: [...] }
       } catch (err: any) {
-        setError(err.message || "An error occurred while fetching users.");
+        // setError(err.message || "An error occurred while fetching users.");
       } finally {
-        setLoading(false);
+        // setLoading(false);
       }
     };
 
