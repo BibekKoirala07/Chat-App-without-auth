@@ -1,3 +1,6 @@
+const Chat = require("../models/Chat");
+const Message = require("../models/Message");
+const User = require("../models/User");
 const MessageHandler = require("./messageHandler");
 
 class SocketServer {
@@ -10,12 +13,74 @@ class SocketServer {
     this.io.on("connection", (socket) => {
       console.log("New client connected:", socket.id);
 
-      socket.on("setup", (userId) => {
-        this.messageHandler.activeUsers.set(userId, socket.id);
-        socket.userId = userId;
-        socket.join(userId);
-        console.log(`User ${userId} connected`);
-        this.io.emit("user-online", userId);
+      socket.on("setup", async (value) => {
+        try {
+          const { name } = value;
+
+          let user = await User.findOne({ name });
+
+          if (!user) {
+            user = await User.create({ name });
+          }
+
+          const userId = user._id;
+
+          // **Check if user is already connected**
+          if (this.messageHandler.activeUsers.has(userId)) {
+            const existingSocketId =
+              this.messageHandler.activeUsers.get(userId);
+
+            // **Disconnect the previous socket to prevent duplicates**
+            if (this.io.sockets.sockets.get(existingSocketId)) {
+              this.io.sockets.sockets.get(existingSocketId).disconnect(true);
+              console.log(`Disconnected previous session for user ${userId}`);
+            }
+          }
+
+          // **Now safely add new connection**
+          this.messageHandler.activeUsers.set(userId, socket.id);
+
+          socket.userId = userId;
+          socket.join(userId);
+          console.log(`User ${userId} connected`);
+
+          this.io.emit("user-setup-complete", user);
+          this.io.emit("user-online", userId);
+        } catch (error) {
+          console.error("Error in setup event:", error);
+        }
+      });
+
+      // Handle the 'create-chat' event
+      socket.on("create-chat", async (data) => {
+        const { senderId, receiverId } = data;
+        console.log("senderId, receiverId", senderId, receiverId);
+
+        try {
+          let chat = await Chat.findOne({
+            members: { $all: [senderId, receiverId] }, // Check if chat already exists
+          });
+
+          if (chat) {
+            console.log("Chat already exists:", chat);
+            socket.emit("chatId-generated", chat);
+          } else {
+            console.log("Creating a new chat...");
+
+            const newChat = new Chat({
+              members: [senderId, receiverId],
+              admin: senderId, // Default admin is sender
+            });
+
+            await newChat.save(); // Save the new chat in DB
+
+            console.log("New chat created:", newChat);
+            socket.emit("chatId-generated", newChat); // Send the newly created chat
+          }
+        } catch (err) {
+          console.error("Error creating or finding chat:", err);
+          socket.emit("chatId-generated", null);
+        }
       });
 
       socket.on("join-chat", (chatId) => {
@@ -26,24 +91,22 @@ class SocketServer {
 
       socket.on("send-message", async (data) => {
         try {
-          const { sender, receiver, content, chatId } = data;
+          const { senderId, receiverId, content, chatId } = data;
 
-          const savedMessage = await this.messageHandler.saveMessage({
-            sender,
-            receiver,
+          console.log("senderId, all text", data);
+          const savedMessage = await Message.create({
+            senderId,
+            receiverId,
             content,
             chatId,
           });
 
-          this.io.to(chatId).emit("new-message", savedMessage);
+          socket.emit("new-message", savedMessage);
 
           const receiverSocketId =
-            this.messageHandler.activeUsers.get(receiver);
+            this.messageHandler.activeUsers.get(receiverId);
           if (receiverSocketId) {
-            this.io.to(receiverSocketId).emit("message-notification", {
-              chatId,
-              message: savedMessage,
-            });
+            this.io.to(receiverSocketId).emit("new-message", savedMessage);
           }
         } catch (error) {
           console.error("Error handling message:", error);
@@ -61,7 +124,6 @@ class SocketServer {
         socket.to(chatId).emit("user-stop-typing", { chatId, userId });
       });
 
-      // Get chat history
       socket.on("get-chat-history", async (chatId) => {
         try {
           const messages = await this.messageHandler.getChatHistory(chatId);
@@ -71,7 +133,6 @@ class SocketServer {
         }
       });
 
-      // Mark messages as read
       socket.on("mark-messages-read", async (data) => {
         try {
           const { chatId, userId } = data;
@@ -85,7 +146,6 @@ class SocketServer {
         }
       });
 
-      // Handle disconnect
       socket.on("disconnect", () => {
         if (socket.userId) {
           this.messageHandler.activeUsers.delete(socket.userId);
@@ -96,3 +156,5 @@ class SocketServer {
     });
   }
 }
+
+module.exports = SocketServer;

@@ -10,6 +10,7 @@ const NamePrompt = ({ onSubmit }: { onSubmit: any }) => {
       setError("Name must be at least 2 characters long");
       return;
     }
+    console.log("here");
     onSubmit(name.trim());
   };
 
@@ -35,7 +36,7 @@ const NamePrompt = ({ onSubmit }: { onSubmit: any }) => {
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full hover:opacity-0.8 cursor-pointer bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Join Chat
           </button>

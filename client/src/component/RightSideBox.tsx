@@ -1,85 +1,102 @@
 import { useParams } from "react-router-dom";
 
-const Message = ({
-  content,
-  timeStamp,
-  isUser,
-  avatar,
-  name,
-}: {
-  content: any;
-  timeStamp?: string;
-  isUser: any;
-  avatar?: any;
-  name: any;
-}) => (
-  <div className={`flex gap-3 mb-6 ${isUser ? "flex-row-reverse" : ""}`}>
-    <div className="flex-shrink-0">
-      <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white">
-        {avatar || name?.charAt(0)}
-      </div>
-    </div>
-    <div
-      className={`flex flex-col ${
-        isUser ? "items-end" : "items-start"
-      } max-w-[70%]`}
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-sm text-gray-400">{name}</span>
-        <span className="text-xs text-gray-500">{timeStamp || "real"}</span>
-      </div>
-      <div
-        className={`rounded-2xl p-3 ${
-          isUser
-            ? "bg-blue-600 text-white rounded-tr-none"
-            : "bg-gray-800 text-white rounded-tl-none"
-        }`}
-      >
-        {content}
-      </div>
-    </div>
-  </div>
-);
+const backendURL =
+  import.meta.env.NODE_ENV === "production"
+    ? import.meta.env.VITE_PROD_BACKEND_URI
+    : import.meta.env.VITE_DEV_BACKEND_URI;
 
-const RightSideBox = () => {
+import { useEffect, useState } from "react";
+import { useSocket } from "@/store/SocketContext";
+import { Message } from "@/types/types";
+import EachMessage from "./EachMessage";
+const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
+  const [messageText, setMessageText] = useState("");
+
+  const { socket, user } = useSocket();
   const { chatId } = useParams();
-  console.log("chatId", chatId);
-  const messages = [
-    {
-      id: 1,
-      content:
-        "Hello, I'm having some trouble with a piece of software I recently downloaded from your site. It keeps crashing every time I try to open it.",
-      timestamp: "14:31",
-      name: "Taylor Smith",
-      isUser: true,
-    },
-    {
-      id: 2,
-      content: "Every time I attempt to launch the software, it crashes",
-      timestamp: "14:35",
-      name: "Taylor Smith",
-      isUser: true,
-    },
-    {
-      id: 3,
-      content:
-        "Thank you for letting me know, Taylor. Can you tell me which version of the software you're using and what operating system you're on? This will help me better understand the issue.",
-      timestamp: "14:39",
-      name: "Kate Moore (Support)",
-      isUser: false,
-    },
-  ];
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  useEffect(() => {
+    if (!chatId || !socket || !user) return;
+
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(
+          `${backendURL}/api/chats/${chatId}/messages?page=${page}&limit=10`
+        );
+        const data = await response.json();
+
+        console.log("data", data);
+
+        if (data.data.length === 0) {
+          setHasMore(false);
+        } else {
+          setMessages((prev: any) => [...data.data, ...prev]);
+        }
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    };
+
+    if (user._id && socket && chatId) {
+      console.log("message fetched at all.");
+      fetchMessages();
+    }
+  }, [chatId, page, user, socket]);
+
+  const loadMoreMessages = () => {
+    if (hasMore) setPage((prev: number) => prev + 1);
+  };
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("new-message", (newMessage) => {
+      console.log("newMessage", newMessage);
+      setMessages((prev) => [...prev, newMessage]);
+    });
+
+    return () => {
+      socket.off("new-message");
+    };
+  }, []);
+
+  const sendMessage = () => {
+    if (!user?._id) return;
+    if (!socket) return;
+    if (!messageText.trim() || !chatId) return;
+
+    const messageData = {
+      chatId,
+      content: messageText,
+      senderId: user._id,
+      receiverId: selectedUser._id,
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log("messageData", messageData);
+
+    socket.emit("send-message", messageData); // Emit event to server
+    setMessageText(""); // Clear input field
+  };
+
+  console.log("all Messages", messages);
 
   return (
     <div className="flex flex-col h-full bg-gray-900">
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white">
-            T
+            {selectedUser ? selectedUser.name.charAt(0).toUpperCase() : "?"}
           </div>
           <div>
-            <h2 className="font-medium text-white">Taylor Smith</h2>
-            <span className="text-sm text-gray-400">Active now</span>
+            <h2 className="font-medium text-white">
+              {selectedUser ? selectedUser.name : "Select a user"}
+            </h2>
+            <span className="text-sm text-gray-400">
+              {selectedUser ? "Active now" : "Not Active"}
+            </span>
           </div>
         </div>
         <div className="flex gap-4">
@@ -118,11 +135,10 @@ const RightSideBox = () => {
 
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((message) => (
-          <Message key={message.id} {...message} />
+          <EachMessage key={message._id} message={message} />
         ))}
       </div>
 
-      {/* Input Area */}
       <div className="p-4 border-t border-gray-800">
         <div className="flex items-center gap-4">
           <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
@@ -143,6 +159,8 @@ const RightSideBox = () => {
           <input
             type="text"
             placeholder="Type your message..."
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
             className="flex-1 bg-gray-800 rounded-full px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
@@ -160,7 +178,11 @@ const RightSideBox = () => {
               />
             </svg>
           </button>
-          <button className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors">
+          <button
+            onClick={sendMessage}
+            disabled={messageText.length == 0}
+            className="p-2 bg-blue-600 disabled:bg-gray-600 hover:bg-blue-700 rounded-full transition-colors"
+          >
             <svg
               className="w-5 h-5 text-white"
               fill="none"

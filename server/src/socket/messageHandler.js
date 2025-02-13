@@ -1,7 +1,9 @@
+const Message = require("../models/Message");
+
 class MessageHandler {
   constructor(io) {
     this.io = io;
-    this.activeUsers = new Map(); // userId -> socketId
+    this.activeUsers = new Map();
   }
 
   async saveMessage(messageData) {
@@ -15,11 +17,11 @@ class MessageHandler {
     }
   }
 
-  async getChatHistory(chatId) {
+  async getChatHistory(chatId, limit = 50) {
     try {
       const messages = await Message.find({ chatId })
         .sort({ createdAt: 1 })
-        .limit(50);
+        .limit(limit);
       return messages;
     } catch (error) {
       console.error("Error fetching chat history:", error);
@@ -27,3 +29,5 @@ class MessageHandler {
     }
   }
 }
+
+module.exports = MessageHandler;
