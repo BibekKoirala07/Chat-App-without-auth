@@ -74,6 +74,7 @@ const App = () => {
     (user) => user._id.toString() === selectedReceiver?.toString()
   );
 
+  console.log("users", users);
   // console.log("seelctedREcie", selectedReceiverUser);
 
   return (
@@ -92,6 +93,7 @@ const App = () => {
                 >
                   <LeftSideBox
                     users={users}
+                    setUsers={setUsers}
                     handleChatChange={handleChatChange}
                   />
                 </div>
@@ -131,6 +133,7 @@ const App = () => {
                   } border-r border-gray-800`}
                 >
                   <LeftSideBox
+                    setUsers={setUsers}
                     users={users}
                     handleChatChange={handleChatChange}
                   />
@@ -157,6 +160,7 @@ const App = () => {
                   } border-r border-gray-800`}
                 >
                   <LeftSideBox
+                    setUsers={setUsers}
                     users={users}
                     handleChatChange={handleChatChange}
                   />

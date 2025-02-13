@@ -2,6 +2,7 @@ const express = require("express");
 const userRoutes = express.Router();
 const User = require("../models/User");
 const Chat = require("../models/Chat");
+const { default: mongoose } = require("mongoose");
 
 userRoutes.post("/add", async (req, res) => {
   try {
@@ -38,24 +39,26 @@ userRoutes.get("/getUser", async (req, res) => {
 
 userRoutes.get("/getAllUsers/:id", async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = new mongoose.Types.ObjectId(req.params.id); // Convert to ObjectId
 
     // Fetch all users except the one who made the request
     const users = await User.find({ _id: { $ne: userId } }).lean();
 
     const responseData = await Promise.all(
       users.map(async (user) => {
-        // Fetch chat where both the user and the requester are members
+        // Fetch chat where both users are members
         const chat = await Chat.findOne({
-          members: { $all: [userId, user._id.toString()] },
+          members: { $all: [userId, user._id] },
         }).lean();
 
         return {
           ...user,
-          chatId: chat ? chat._id : null, // Assign chatId if chat exists
+          chatId: chat ? chat : null, // Assign chatId if chat exists
         };
       })
     );
+
+    console.log("data", responseData);
 
     res.status(200).json({ success: true, data: responseData });
   } catch (error) {

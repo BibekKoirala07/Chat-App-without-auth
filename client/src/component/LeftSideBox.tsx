@@ -1,22 +1,40 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, ExternalLink } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "@/store/SocketContext";
 
 const LeftSideBox = ({
   users,
+  setUsers,
   handleChatChange,
 }: {
   users: any[];
+  setUsers: any;
   handleChatChange: (chatId: string) => void;
 }) => {
-  const { activeUsers } = useSocket();
+  // const [toBeUpdatedUser, setToBeUpdatedUser] = useState(users);
+  const { activeUsers, socket } = useSocket();
 
   const [activeTab, setActiveTab] = useState("Friends");
 
   const [searchTerm, setSearchTerm] = useState("");
 
   const { chatId } = useParams();
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("receive-message", (data) => {
+      console.log("data in receive message in leftSide", data);
+      const udpatedChat = data.udpatedChat;
+      setUsers((prevUsers: any) =>
+        prevUsers.map((user: any) =>
+          user.chatId && user.chatId._id === udpatedChat._id
+            ? { ...user, chatId: udpatedChat }
+            : user
+        )
+      );
+    });
+  }, []);
 
   // console.log("users", users);
   // console.log("socket", socket);
@@ -47,9 +65,9 @@ const LeftSideBox = ({
   //   }
   // }, [chatId]);
 
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // const filteredUsers = toBeUpdatedUser.filter((user) =>
+  //   user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg">
@@ -99,7 +117,7 @@ const LeftSideBox = ({
       </div>
 
       <div className="mt-6 space-y-4">
-        {filteredUsers.map((user) => (
+        {users.map((user) => (
           <div
             key={user._id}
             onClick={() => handleChatChange(user._id)}
@@ -129,7 +147,7 @@ const LeftSideBox = ({
                               rounded-full flex items-center justify-center"
                 >
                   <span className="text-xs text-white font-medium">
-                    {user.unreadCount || 2}
+                    {user.unreadCount || 1}
                   </span>
                 </div>
               )}
@@ -140,7 +158,7 @@ const LeftSideBox = ({
                 {user.name}
               </h2>
               <p className="text-sm text-gray-500 truncate">
-                {user?.message || "I am having a problem"}
+                {user?.chatId.latestMessage.content || "I am having a problem"}
               </p>
             </div>
           </div>

@@ -92,14 +92,18 @@ module.exports = (io) => {
         const { senderId, receiverId, content, chatId } = data;
 
         console.log("senderId, all text", data);
-        const savedMessage = await Message.create({
+        const message = await Message.create({
           senderId,
           receiverId,
           content,
           chatId,
         });
 
-        await Chat.findByIdAndUpdate(
+        const savedMessage = await Message.findById(message._id)
+          .populate("senderId", "name")
+          .populate("receiverId", "name");
+
+        const updatedChat = await Chat.findByIdAndUpdate(
           chatId,
           {
             latestMessage: {
@@ -113,7 +117,7 @@ module.exports = (io) => {
 
         console.log("savedmessage", savedMessage);
 
-        socket.emit("receive-message", savedMessage);
+        socket.emit("receive-message", { savedMessage, updatedChat });
 
         console.log("connectedUserIdToSocket", connectedUserIdToSocketId);
 
@@ -121,7 +125,10 @@ module.exports = (io) => {
           receiverId.toString()
         );
         if (receiverSocketId) {
-          io.to(receiverSocketId).emit("receive-message", savedMessage);
+          io.to(receiverSocketId).emit("receive-message", {
+            savedMessage,
+            updatedChat,
+          });
         }
       } catch (error) {
         console.error("Error handling message:", error);

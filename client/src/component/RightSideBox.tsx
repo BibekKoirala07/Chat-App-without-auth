@@ -12,12 +12,13 @@ import EachMessage from "./EachMessage";
 const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
   const [messageText, setMessageText] = useState("");
 
-  const { socket, user, activeUsers } = useSocket();
   const { chatId } = useParams();
+
+  const { socket, user, activeUsers } = useSocket();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  // const [page, setPage] = useState(1);
+  // const [hasMore, setHasMore] = useState(true);
+  // const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!chatId || !socket || !user) return;
@@ -25,16 +26,16 @@ const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
     const fetchMessages = async () => {
       try {
         const response = await fetch(
-          `${backendURL}/api/chats/${chatId}/messages?page=${page}&limit=10`
+          `${backendURL}/api/chats/${chatId}/messages?page=${1}&limit=10`
         );
         const data = await response.json();
 
-        console.log("data", data);
+        // console.log("data", data);
 
         if (data.data.length === 0) {
-          setHasMore(false);
+          // setHasMore(false);
         } else {
-          setMessages((prev: any) => [...data.data, ...prev]);
+          setMessages((prev: any) => [...data.data.reverse(), ...prev]);
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -45,21 +46,23 @@ const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
       console.log("message fetched at all.");
       fetchMessages();
     }
-  }, [chatId, page, socket]);
+  }, [chatId, socket]);
 
-  const loadMoreMessages = () => {
-    if (!hasMore || isLoading) return;
-    setIsLoading(true);
-    setPage((prev) => prev + 1);
-    setIsLoading(false);
-  };
+  // const loadMoreMessages = () => {
+  //   if (!hasMore || isLoading) return;
+  //   setIsLoading(true);
+  //   setPage((prev) => prev + 1);
+  //   setIsLoading(false);
+  // };
 
-  console.log("loadMessage", loadMoreMessages);
+  // console.log("loadMessage", loadMoreMessages);
 
   useEffect(() => {
     if (!socket) return;
-    socket.on("receive-message", (newMessage) => {
-      console.log("newMessage", newMessage);
+    socket.on("receive-message", (data) => {
+      console.log("data in receive message", data);
+      const newMessage = data.savedMessage;
+      // console.log("newMessage", newMessage);
       setMessages((prev) => [...prev, newMessage]);
     });
 
@@ -83,19 +86,21 @@ const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
       timestamp: new Date().toISOString(),
     };
 
-    console.log("messageData", messageData);
+    // console.log("messageData", messageData);
 
     socket.emit("send-message", messageData); // Emit event to server
     setMessageText(""); // Clear input field
   };
 
-  console.log("all Messages", messages);
+  // console.log("all Messages", messages);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       sendMessage();
     }
   };
+
+  console.log("message", messages);
 
   return (
     <div className="flex flex-col h-full bg-gray-900">
@@ -109,7 +114,7 @@ const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
               {selectedUser ? selectedUser.name : "Select a user"}
             </h2>
             <span className="text-sm text-gray-400">
-              {activeUsers.includes(user?._id ?? "")
+              {activeUsers.includes(selectedUser._id ?? "")
                 ? "Active now"
                 : "Not Active"}
             </span>
