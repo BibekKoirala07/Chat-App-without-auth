@@ -16,15 +16,15 @@ const backendURL =
     : import.meta.env.VITE_DEV_BACKEND_URI;
 
 const App = () => {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("chatUser");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const { user } = useSocket();
   const navigate = useNavigate();
   const { socket, connectSocket } = useSocket();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeUsers, setActiveUsers] = useState([]);
   const [error, setError] = useState<string | null>(null);
+
+  console.log(loading, error, activeUsers, setActiveUsers);
 
   const [selectedReceiver, setSelectedReceiver] = useState<string | null>("");
 
@@ -42,19 +42,20 @@ const App = () => {
   const handleNameSubmit = (name: string) => {
     console.log("handlesubmit");
     connectSocket(name);
-    setUser({ name });
   };
 
-  useEffect(() => {
-    if (user) {
-      connectSocket(user.name);
-    }
-  }, [user, connectSocket]);
-
-  // console.log("user", user);
+  console.log("user", user);
 
   useEffect(() => {
+    socket?.on("active-users", (data) => {
+      console.log("data", data);
+    });
+  }, []);
+
+  useEffect(() => {
+    console.log("useEffect in users fetching");
     if (!user?._id) return;
+    console.log("useEffect in after fetching");
 
     const fetchUsers = async () => {
       try {
@@ -80,13 +81,13 @@ const App = () => {
     };
 
     fetchUsers();
-  }, [user]);
+  }, [user, socket]);
 
   const selectedReceiverUser = users.find(
-    (user) => user._id.toString() === selectedReceiver.toString()
+    (user) => user._id.toString() === selectedReceiver?.toString()
   );
 
-  console.log("seelctedREcie", selectedReceiverUser);
+  // console.log("seelctedREcie", selectedReceiverUser);
 
   return (
     <div>

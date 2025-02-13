@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
 const socketUrl =
@@ -26,29 +26,70 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  // Add connection status tracking
+  const [isConnected, setIsConnected] = useState(false);
+  const connectionAttemptRef = useRef(false);
+
+  // Cleanup function for socket
   useEffect(() => {
-    if (user) {
+    return () => {
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+        setIsConnected(false);
+      }
+    };
+  }, [socket]);
+
+  // Modified connection logic
+  useEffect(() => {
+    if (user && !isConnected && !connectionAttemptRef.current) {
       connectSocket(user.name);
     }
-  }, [user]);
+  }, [user, isConnected]);
 
   const connectSocket = (name: string) => {
-    if (!socket) {
-      const newSocket = io(socketUrl);
-
-      newSocket.on("connect", () => {
-        console.log("Connected to server:", newSocket.connected);
-        newSocket.emit("setup", { name });
-      });
-
-      newSocket.on("user-setup-complete", (userData) => {
-        // console.log("User setup complete", userData);
-        localStorage.setItem("chatUser", JSON.stringify(userData));
-        newSocket.emit("user-connected", userData.userId);
-      });
-
-      setSocket(newSocket);
+    if (connectionAttemptRef.current || isConnected) {
+      console.log("Connection already in progress or socket already connected");
+      return;
     }
+
+    connectionAttemptRef.current = true;
+
+    const newSocket = io(socketUrl, {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+
+    newSocket.on("connect", () => {
+      console.log("Connected to server:", newSocket.connected);
+      setIsConnected(true);
+      newSocket.emit("setup", { name });
+    });
+
+    newSocket.on("user-setup-complete", (userData: User) => {
+      console.log("User setup complete", userData);
+      if (userData) {
+        localStorage.setItem("chatUser", JSON.stringify(userData));
+        setUser(userData);
+      }
+    });
+
+    newSocket.on("disconnect", () => {
+      console.log("Socket disconnected");
+      setIsConnected(false);
+      connectionAttemptRef.current = false;
+      setSocket(null);
+    });
+
+    newSocket.on("connect_error", (error) => {
+      console.error("Connection error:", error);
+      setIsConnected(false);
+      connectionAttemptRef.current = false;
+    });
+
+    setSocket(newSocket);
   };
 
   return (

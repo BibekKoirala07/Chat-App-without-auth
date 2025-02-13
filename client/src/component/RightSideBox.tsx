@@ -17,6 +17,7 @@ const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!chatId || !socket || !user) return;
@@ -44,28 +45,35 @@ const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
       console.log("message fetched at all.");
       fetchMessages();
     }
-  }, [chatId, page, user, socket]);
+  }, [chatId, page, socket]);
 
   const loadMoreMessages = () => {
-    if (hasMore) setPage((prev: number) => prev + 1);
+    if (!hasMore || isLoading) return;
+    setIsLoading(true);
+    setPage((prev) => prev + 1);
+    setIsLoading(false);
   };
+
+  console.log("loadMessage", loadMoreMessages);
 
   useEffect(() => {
     if (!socket) return;
-    socket.on("new-message", (newMessage) => {
+    socket.on("receive-message", (newMessage) => {
       console.log("newMessage", newMessage);
       setMessages((prev) => [...prev, newMessage]);
     });
 
     return () => {
-      socket.off("new-message");
+      socket.off("receive-message");
     };
-  }, []);
+  }, [socket]);
 
   const sendMessage = () => {
+    console.log("send message top");
     if (!user?._id) return;
     if (!socket) return;
     if (!messageText.trim() || !chatId) return;
+    console.log("send message after");
 
     const messageData = {
       chatId,
@@ -82,6 +90,12 @@ const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
   };
 
   console.log("all Messages", messages);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-gray-900">
@@ -180,6 +194,7 @@ const RightSideBox = ({ selectedUser }: { selectedUser: any }) => {
           </button>
           <button
             onClick={sendMessage}
+            onKeyDown={handleKeyDown}
             disabled={messageText.length == 0}
             className="p-2 bg-blue-600 disabled:bg-gray-600 hover:bg-blue-700 rounded-full transition-colors"
           >

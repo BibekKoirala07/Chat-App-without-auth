@@ -8,6 +8,7 @@ const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const SocketServer = require("./socket/socketServer");
 const chatRoutes = require("./routes/chatRoutes");
+const socketServer = require("./socket/socketServer");
 
 console.log("process", process.env.DEV_FRONTEND_URI);
 
@@ -47,8 +48,7 @@ mongoose
   })
   .catch((err) => console.error("MongoDB connection error:", err));
 
-const socketServer = new SocketServer(io);
-socketServer.start();
+socketServer(io);
 
 app.use("/api/users", userRoutes);
 app.use("/api/chats", chatRoutes);

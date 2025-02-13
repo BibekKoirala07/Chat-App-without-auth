@@ -39,10 +39,10 @@ userRoutes.get("/getUser", async (req, res) => {
 userRoutes.get("/getAllUsers/:id", async (req, res) => {
   try {
     const userId = req.params.id;
-    console.log("Received userId:", userId);
+    // console.log("Received userId:", userId);
 
-    const users = await User.find({}).lean();
-    console.log("Fetched users:", users);
+    const users = await User.find({ _id: { $ne: userId } }).lean();
+    // console.log("Fetched users:", users);
 
     const responseData = await Promise.all(
       users.map(async (user) => {
