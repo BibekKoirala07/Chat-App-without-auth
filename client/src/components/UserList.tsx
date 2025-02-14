@@ -47,6 +47,8 @@ const UserList = ({
     setIsModalOpen(false);
   };
 
+  console.log("users", users);
+
   const [friendsOrGroup, setFriendsOrGroup] = useState(
     location.pathname.includes("group") ? "Groups" : "Friends"
   );
@@ -113,7 +115,7 @@ const UserList = ({
               <div className="relative">
                 <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
                   <span className="text-lg font-medium text-gray-600">
-                    {user.name.charAt(0).toUpperCase().toString()}
+                    {user?.name?.charAt(0).toUpperCase().toString() || "R"}
                   </span>
                 </div>
                 {activeUsers.includes(user._id) && (
