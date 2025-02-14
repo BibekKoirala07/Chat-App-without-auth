@@ -1,17 +1,18 @@
 import { useState } from "react";
+import { useSocket } from "../store/SocketContext";
 
-const NamePrompt = ({ onSubmit }: { onSubmit: any }) => {
+const NamePrompt = () => {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const { connectSocket } = useSocket();
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    if (name.trim().length < 2) {
-      setError("Name must be at least 2 characters long");
+    if (name.trim().length < 3) {
+      setError("Name must be at least 3 characters long");
       return;
     }
-    console.log("here");
-    onSubmit(name.trim());
+    connectSocket(name);
   };
 
   return (

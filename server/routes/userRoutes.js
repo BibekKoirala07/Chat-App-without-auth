@@ -1,7 +1,6 @@
 const express = require("express");
 const userRoutes = express.Router();
 const User = require("../models/User");
-const Chat = require("../models/Chat");
 const { default: mongoose } = require("mongoose");
 
 userRoutes.post("/add", async (req, res) => {
@@ -21,19 +20,19 @@ userRoutes.post("/add", async (req, res) => {
   }
 });
 
-userRoutes.get("/getUser", async (req, res) => {
+userRoutes.get("/getUser/:id", async (req, res) => {
   try {
-    const { userId } = req.query;
-    let user = await User.findOne({ userId });
+    const { id } = req.params;
+    let user = await User.findById(id);
+    // console.log("user", user);
 
     if (!user) {
-      // Default user if not found
-      user = { userId: "default-id", name: "Default User" };
+      throw Error("User not found");
     }
 
-    res.status(200).json({ success: true, data: user });
+    return res.status(200).json({ success: true, data: user });
   } catch (error) {
-    res.status(500).json({ success: false, error: "Server error" });
+    return res.status(500).json({ success: false, error: "User not found" });
   }
 });
 
@@ -41,24 +40,25 @@ userRoutes.get("/getAllUsers/:id", async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.params.id); // Convert to ObjectId
 
-    // Fetch all users except the one who made the request
     const users = await User.find({ _id: { $ne: userId } }).lean();
 
-    const responseData = await Promise.all(
-      users.map(async (user) => {
-        // Fetch chat where both users are members
-        const chat = await Chat.findOne({
-          members: { $all: [userId, user._id] },
-        }).lean();
+    // const responseData = await Promise.all(
+    //   users.map(async (user) => {
+    //     // Fetch chat where both users are members
+    //     const chat = await Chat.findOne({
+    //       members: { $all: [userId, user._id] },
+    //     }).lean();
 
-        return {
-          ...user,
-          chatId: chat ? chat : null, // Assign chatId if chat exists
-        };
-      })
-    );
+    //     return {
+    //       ...user,
+    //       chatId: chat ? chat : null,
+    //     };
+    //   })
+    // );
 
-    console.log("data", responseData);
+    const responseData = users;
+
+    // console.log("data", responseData);
 
     res.status(200).json({ success: true, data: responseData });
   } catch (error) {

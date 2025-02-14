@@ -1,180 +1,25 @@
-import { useEffect, useState } from "react";
-import { Routes, Route, useParams, useNavigate } from "react-router-dom";
-import { useMediaQuery } from "react-responsive";
-import NamePrompt from "./component/NamePrompt";
+import { Route, Routes } from "react-router-dom";
+import NamePrompt from "./components/NamePrompt";
 import { useSocket } from "./store/SocketContext";
-import LeftSideBox from "./component/LeftSideBox";
-import RightSideBox from "./component/RightSideBox";
-import WelcomeMessage from "./component/WelcomeMessage";
-import "./App.css";
-import ClickUserPrompt from "./component/ClickUserPrompt";
-import CreateChatPrompt from "./component/CreateChatPrompt";
-
-const backendURL =
-  import.meta.env.NODE_ENV === "production"
-    ? import.meta.env.VITE_PROD_BACKEND_URI
-    : import.meta.env.VITE_DEV_BACKEND_URI;
+import AppLayout from "./layout/AppLayout";
+import EmptyChat from "./components/EmptyChat";
+import ChatContainer from "./components/ChatContainer";
+import GroupContainer from "./components/GroupContainer";
 
 const App = () => {
   const { user } = useSocket();
-  const navigate = useNavigate();
-  const { socket, connectSocket } = useSocket();
-  const [users, setUsers] = useState<any[]>([]);
-
-  const [selectedReceiver, setSelectedReceiver] = useState<string | null>("");
-
-  const handleChatChange = (receiverId: string) => {
-    console.log("set selectedChat", receiverId);
-    setSelectedReceiver(receiverId);
-    navigate("/chat");
-  };
-
-  const isMobile = useMediaQuery({ maxWidth: 768 });
-  const isTabletOrMobile = useMediaQuery({ maxWidth: 1024 });
-
-  const { chatId } = useParams();
-
-  const handleNameSubmit = (name: string) => {
-    console.log("handlesubmit");
-    connectSocket(name);
-  };
-
-  useEffect(() => {
-    // console.log("useEffect in users fetching");
-    if (!user?._id) return;
-    // console.log("useEffect in after fetching");
-
-    const fetchUsers = async () => {
-      try {
-        // setLoading(true);
-        // setError(null);
-
-        const response = await fetch(
-          `${backendURL}/api/users/getAllUsers/${user._id}`
-        );
-
-        const data = await response.json();
-        console.log("data", data);
-        if (!response.ok) {
-          throw new Error("Failed to fetch users");
-        }
-
-        setUsers(data.data); // Assuming the API returns { data: [...] }
-      } catch (err: any) {
-        // setError(err.message || "An error occurred while fetching users.");
-      } finally {
-        // setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, [user, socket]);
-
-  const selectedReceiverUser = users.find(
-    (user) => user._id.toString() === selectedReceiver?.toString()
-  );
-
-  console.log("users", users);
-  // console.log("seelctedREcie", selectedReceiverUser);
-
   return (
-    <div>
-      {!user && <NamePrompt onSubmit={handleNameSubmit} />}
+    <div className="max-h-screen max-w-screen">
+      {/* <div className="absolute w-full bg-red-50 rounded-xl text-xl text-center text-red-500 m-2 p-2 py-3">
+        I am currently building this. It might looks cluttered for now.
+      </div> */}
+      {!user && <NamePrompt />}
       <Routes>
-        <Route
-          path="/"
-          element={
-            <div className="h-screen flex">
-              {(!isMobile || !chatId) && (
-                <div
-                  className={`${
-                    isTabletOrMobile ? "w-full" : "w-[400px]"
-                  } border-r border-gray-800`}
-                >
-                  <LeftSideBox
-                    users={users}
-                    setUsers={setUsers}
-                    handleChatChange={handleChatChange}
-                  />
-                </div>
-              )}
-
-              {!isMobile && !chatId && (
-                <div className="flex-1">
-                  {chatId ? (
-                    <RightSideBox selectedUser={selectedReceiverUser} />
-                  ) : (
-                    !isMobile && <ClickUserPrompt />
-                  )}
-                </div>
-              )}
-
-              {!isMobile && chatId && (
-                <div className="flex-1">
-                  {chatId ? (
-                    <RightSideBox selectedUser={selectedReceiverUser} />
-                  ) : (
-                    !isMobile && <WelcomeMessage />
-                  )}
-                </div>
-              )}
-            </div>
-          }
-        />
-
-        <Route
-          path="/chat"
-          element={
-            <div className="h-screen flex">
-              {!isMobile && (
-                <div
-                  className={`${
-                    isTabletOrMobile ? "w-full" : "w-[400px]"
-                  } border-r border-gray-800`}
-                >
-                  <LeftSideBox
-                    setUsers={setUsers}
-                    users={users}
-                    handleChatChange={handleChatChange}
-                  />
-                </div>
-              )}
-
-              {true && (
-                <div className="flex-1">
-                  <CreateChatPrompt receiverId={selectedReceiver} />
-                </div>
-              )}
-            </div>
-          }
-        />
-
-        <Route
-          path="/chat/:chatId"
-          element={
-            <div className="h-screen flex">
-              {!isMobile && (
-                <div
-                  className={`${
-                    isTabletOrMobile ? "w-full" : "w-[400px]"
-                  } border-r border-gray-800`}
-                >
-                  <LeftSideBox
-                    setUsers={setUsers}
-                    users={users}
-                    handleChatChange={handleChatChange}
-                  />
-                </div>
-              )}
-
-              {true && (
-                <div className="flex-1">
-                  <RightSideBox selectedUser={selectedReceiverUser} />
-                </div>
-              )}
-            </div>
-          }
-        />
+        <Route path="/" element={<AppLayout />}>
+          <Route index element={<EmptyChat />} />
+          <Route path="chat/:userId" element={<ChatContainer />} />
+          <Route path="group/:groupId" element={<GroupContainer />} />
+        </Route>
       </Routes>
     </div>
   );

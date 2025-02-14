@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import io from "socket.io-client";
+
+import { Socket } from "socket.io-client";
 
 const socketUrl =
   import.meta.env.NODE_ENV === "production"
@@ -12,7 +14,7 @@ interface User {
 }
 
 interface SocketContextType {
-  socket: Socket | null;
+  socket: typeof Socket | null;
   user: User | null;
   connectSocket: (name: string) => void;
   activeUsers: string[];
@@ -21,19 +23,18 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socket, setSocket] = useState<typeof Socket | null>(null);
   const [user, setUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem("chatUser");
     return savedUser ? JSON.parse(savedUser) : null;
   });
   const [activeUsers, setActiveUsers] = useState<string[]>([]);
 
-  // Add connection status tracking
   const [isConnected, setIsConnected] = useState(false);
   const connectionAttemptRef = useRef(false);
 
-  // Cleanup function for socket
   useEffect(() => {
+    // console.log("useEffect for socket");
     return () => {
       if (socket) {
         socket.disconnect();
@@ -43,8 +44,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [socket]);
 
-  // Modified connection logic
+  // console.log("context initialized");
+
   useEffect(() => {
+    // console.log("useEffect connected");
     if (user && !isConnected && !connectionAttemptRef.current) {
       connectSocket(user.name);
     }
@@ -52,9 +55,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   const connectSocket = (name: string) => {
     if (connectionAttemptRef.current || isConnected) {
-      console.log("Connection already in progress or socket already connected");
+      // console.log("Connection already in progress or socket already connected");
       return;
     }
+
+    // console.log("connect hudai xa");
 
     connectionAttemptRef.current = true;
 
@@ -70,8 +75,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.emit("setup", { name });
     });
 
-    newSocket.on("active-users", (data) => {
-      console.log("data", data);
+    newSocket.on("active-users", (data: string[]) => {
+      // console.log("data", data);
       setActiveUsers(data);
     });
 
@@ -84,14 +89,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     newSocket.on("disconnect", () => {
-      console.log("Socket disconnected");
+      // console.log("Socket disconnected");
       setIsConnected(false);
       connectionAttemptRef.current = false;
       setSocket(null);
     });
 
-    newSocket.on("connect_error", (error) => {
-      console.error("Connection error:", error);
+    newSocket.on("connect_error", (error: any) => {
+      // console.error("Connection error:", error);
       setIsConnected(false);
       connectionAttemptRef.current = false;
     });
@@ -110,6 +115,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useSocket = () => {
   const context = useContext(SocketContext);
+  // console.log("useContext hook");
   if (!context) {
     throw new Error("useSocket must be used within a SocketProvider");
   }

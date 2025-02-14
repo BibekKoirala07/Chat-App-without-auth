@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "cd src && nodemon server.js"
+    "start": "nodemon server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

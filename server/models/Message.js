@@ -10,7 +10,7 @@ const messageSchema = new mongoose.Schema(
     receiverId: {
       ref: "User",
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
+      required: false,
     },
     content: {
       type: String,
@@ -19,7 +19,7 @@ const messageSchema = new mongoose.Schema(
     chatId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Chat",
-      required: true,
+      required: false,
     },
     isRead: {
       type: Boolean,
