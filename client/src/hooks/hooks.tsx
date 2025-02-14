@@ -3,7 +3,7 @@ import { useSocket } from "../store/SocketContext";
 import backendURL from "../utils/apiRoutes";
 
 const backendUrl =
-  import.meta.env.NODE_ENV === "production"
+  import.meta.env.MODE === "production"
     ? import.meta.env.VITE_PROD_BACKEND_URI
     : import.meta.env.VITE_DEV_BACKEND_URI;
 
