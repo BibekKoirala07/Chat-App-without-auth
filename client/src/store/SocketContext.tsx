@@ -96,7 +96,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     newSocket.on("connect_error", (error: any) => {
-      // console.error("Connection error:", error);
+      console.error("Connection error:", error);
       setIsConnected(false);
       connectionAttemptRef.current = false;
     });
