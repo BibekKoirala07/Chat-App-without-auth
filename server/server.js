@@ -26,7 +26,7 @@ app.use(
   })
 );
 
-console.log(process.env.DEV_FRONTEND_URI);
+console.log(process.env.PROD_FRONTEND_URI);
 
 const io = new socketIO.Server(server, {
   cors: {
