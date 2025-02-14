@@ -16,7 +16,7 @@ const EachMessage = ({
   message: any;
   chatUser: any;
 }) => {
-  const { content, senderId, receiverId, _id, createdAt, updatedAt } = message;
+  const { content, senderId, createdAt } = message;
   const { user } = useSocket();
   if (!user) return null;
   const isThisGuyASender = senderId._id.toString() == user?._id.toString();
@@ -111,9 +111,9 @@ const ChatContainerHeader = ({ chatUser }: { chatUser: any }) => {
   );
 };
 
-const ChatContainerSendMessageSection = () => {
-  return <div>real</div>;
-};
+// const ChatContainerSendMessageSection = () => {
+//   return <div>real</div>;
+// };
 
 const ChatContainer = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);

@@ -49,7 +49,7 @@ const GroupContainerHeader = ({
   groupActiveMembers: string[];
 }) => {
   if (!groupInfo) return null;
-  const totalMembers = groupInfo.members?.length || 0;
+  // const totalMembers = groupInfo.members?.length || 0;
   const onlineMembers =
     groupInfo.members?.filter((member: string) =>
       groupActiveMembers.includes(member)
