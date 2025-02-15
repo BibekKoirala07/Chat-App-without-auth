@@ -8,10 +8,16 @@ import GroupEachMessage from "./groups/GroupEachMessage";
 import GroupSendMessageFooter from "./groups/GroupSendMessageFooter";
 
 const GroupContainer = () => {
+  const [page, setPage] = useState<number>(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const [hasMore, setHasMore] = useState(true);
 
   const [groupMessages, setGroupMessages] = useState<any[]>([]);
 
@@ -22,6 +28,10 @@ const GroupContainer = () => {
   const { socket, user } = useSocket();
 
   const { groupId } = useParams();
+
+  const { group } = useFetchGroup(groupId);
+
+  const limit = 5;
 
   useEffect(() => {
     if (!socket) return;
@@ -63,33 +73,78 @@ const GroupContainer = () => {
     socket?.on("receive-group-message", handleReceiveGroupMessage);
   }, [socket, groupId]);
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const response = await fetch(
-          `${backendURL}/api/chats/getAllMessages/${groupId}`
-        );
-        const data = await response.json();
-        if (data.success) {
-          setGroupMessages(data.data);
+  const fetchMessages = async (pageNum: number) => {
+    try {
+      const messageResponse = await fetch(
+        `${backendURL}/api/chats/getAllMessages/${groupId}?page=${pageNum}&limit=${limit}`
+      );
+      const messageData = await messageResponse.json();
+      if (messageResponse.ok) {
+        const { data, pagination } = messageData;
+        const { totalPages, currentPage } = pagination;
+        const orderedMessages = [...data].reverse();
+        console.log("totalPages", totalPages, currentPage);
+        if (currentPage == 1) {
+          setGroupMessages(orderedMessages);
+          console.log("currentPage", currentPage);
+          setTimeout(scrollToBottom, 20);
+        } else {
+          setGroupMessages((prevMessages) => [
+            ...orderedMessages,
+            ...prevMessages,
+          ]);
         }
-      } catch (error) {
-        console.error("Error fetching messages:", error);
+        setHasMore(currentPage < totalPages);
+      }
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!groupId) return;
+    setGroupMessages([]);
+    setPage(1);
+    fetchMessages(1);
+  }, [groupId]);
+
+  // useEffect(() => {
+  //   scrollToBottom();
+  // }, [groupMessages]);
+
+  useEffect(() => {
+    const chatContainer = chatContainerRef.current;
+    if (!chatContainer) return;
+
+    const handleScroll = () => {
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
+      }
+
+      if (chatContainer.scrollTop < 50 && !isLoadingMore && hasMore) {
+        scrollTimerRef.current = setTimeout(() => {
+          setIsLoadingMore(true);
+          setPage((prevPage) => {
+            const nextPage = prevPage + 1;
+            fetchMessages(nextPage).finally(() => {
+              setIsLoadingMore(false);
+            });
+            return nextPage;
+          });
+        }, 1000); // Wait for 1 second at the top before loading
       }
     };
 
-    if (groupId) {
-      fetchMessages();
-    }
-  }, [groupId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [groupMessages]);
+    chatContainer.addEventListener("scroll", handleScroll);
+    return () => {
+      chatContainer.removeEventListener("scroll", handleScroll);
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
+      }
+    };
+  }, [isLoadingMore, hasMore, groupId, user?._id]);
 
   if (!groupId) return null;
-
-  const { group } = useFetchGroup(groupId);
 
   console.log("group", group);
 
@@ -102,7 +157,18 @@ const GroupContainer = () => {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4" ref={chatContainerRef}>
+        {hasMore && (
+          <div className="flex justify-center items-center py-4">
+            <div className="w-12 h-12 border-t-4 border-blue-600 border-solid rounded-full animate-spin"></div>
+          </div>
+        )}
+
+        {!hasMore && (
+          <div className="flex justify-center items-center py-4">
+            <p className="text-gray-500">No more messages to load.</p>
+          </div>
+        )}
         {groupMessages.map((message) => (
           <div key={message._id}>
             <GroupEachMessage message={message} />

@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import ChatContainerHeader from "./chat/ChatContainerHeader";
 import ChatEachMessage from "./chat/ChatEachMessage";
 import ChatSendMessageFooter from "./chat/ChatSendMessageFooter";
+import { useFetchUser } from "../hooks/hooks";
 
 const backendUrl =
   import.meta.env.MODE === "production"
@@ -12,41 +13,57 @@ const backendUrl =
     : import.meta.env.VITE_DEV_BACKEND_URI;
 
 const ChatContainer = () => {
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState<number>(1);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
   const { userId } = useParams();
-  const [chatUser, setChatUser] = useState();
   const { socket, user } = useSocket();
   const [messages, setMessages] = useState<any[]>([]);
 
+  const { user: chatUser } = useFetchUser(userId);
+  const limit = 10;
+  const fetchMessages = async (pageNum: number) => {
+    const messageResponse = await fetch(
+      `${backendUrl}/api/messages/${userId}?senderId=${user?._id}&page=${pageNum}&limit=${limit}`
+    );
+    if (!messageResponse.ok) throw new Error("Failed to fetch messages");
+    const messageData = await messageResponse.json();
+    console.log("message in chatContainer", messageData);
+
+    if (messageResponse.ok) {
+      const { data, pagination } = messageData;
+      console.log("data in chat Group", data, pagination);
+      const { totalPages, currentPage } = pagination;
+      const orderedMessages = [...data].reverse();
+      if (currentPage == 1) {
+        setMessages(orderedMessages);
+        console.log("currentPage", currentPage);
+        setTimeout(scrollToBottom, 20);
+      } else {
+        setMessages((prevMessages) => [...orderedMessages, ...prevMessages]);
+      }
+
+      setHasMore(currentPage < totalPages);
+    }
+  };
+
+  console.log("messages", messages);
+
   useEffect(() => {
-    if (!userId) return;
-    const fetchData = async () => {
-      const response = await fetch(`${backendUrl}/api/users/getUser/${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch user");
-
-      const data = await response.json();
-      setChatUser(data.data);
-
-      console.log("data in chatContainer", data);
-
-      const messageResponse = await fetch(
-        `${backendUrl}/api/messages/${userId}?senderId=${user?._id}`
-      );
-      if (!messageResponse.ok) throw new Error("Failed to fetch messages");
-      const messageData = await messageResponse.json();
-      console.log("message in chatContainer", messageData);
-      setMessages(messageData.data);
-    };
-    fetchData();
+    if (!userId || !user?._id) return;
+    setMessages([]);
+    setPage(1);
+    fetchMessages(1);
   }, [userId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   useEffect(() => {
     if (!socket) return;
@@ -63,6 +80,39 @@ const ChatContainer = () => {
     };
   }, [socket]);
 
+  useEffect(() => {
+    const chatContainer = chatContainerRef.current;
+    if (!chatContainer) return;
+
+    const handleScroll = () => {
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
+      }
+
+      if (chatContainer.scrollTop < 50 && !isLoadingMore && hasMore) {
+        scrollTimerRef.current = setTimeout(() => {
+          setIsLoadingMore(true);
+          setPage((prevPage) => {
+            const nextPage = prevPage + 1;
+            fetchMessages(nextPage).finally(() => {
+              setIsLoadingMore(false);
+            });
+            return nextPage;
+          });
+        }, 1000); // Wait for 1 second at the top before loading
+      }
+    };
+
+    chatContainer.addEventListener("scroll", handleScroll);
+    return () => {
+      chatContainer.removeEventListener("scroll", handleScroll);
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
+      }
+    };
+  }, [isLoadingMore, hasMore, userId, user?._id]);
+
+  if (!userId) return null;
   if (!user?._id) return null;
   return (
     <div className="flex flex-col h-screen bg-gray-900">
@@ -70,7 +120,21 @@ const ChatContainer = () => {
         <ChatContainerHeader chatUser={chatUser} />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+      >
+        {hasMore && (
+          <div className="flex justify-center items-center py-4">
+            <div className="w-12 h-12 border-t-4 border-blue-600 border-solid rounded-full animate-spin"></div>
+          </div>
+        )}
+
+        {!hasMore && (
+          <div className="flex justify-center items-center py-4">
+            <p className="text-gray-500">No more messages to load.</p>
+          </div>
+        )}
         {messages.map((message) => (
           <div key={message._id}>
             <ChatEachMessage chatUser={chatUser} message={message} />

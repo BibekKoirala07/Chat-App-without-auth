@@ -25,33 +25,40 @@ export const useFetchMessages = () => {
   return { messages, loading };
 };
 
-export const useFetchUser = (userId: string) => {
+export const useFetchUser = (userId: string | undefined) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+  const [userError, setUserError] = useState(null);
+
+  // console.log("userId", userId);
+
+  // console.log("user", user);
 
   useEffect(() => {
     if (!userId) return;
 
     const fetchUser = async () => {
       try {
-        const response = await fetch(`/api/users/${userId}`);
+        const response = await fetch(
+          `${backendURL}/api/users/getUser/${userId}`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch user");
         }
         const data = await response.json();
-        setUser(data);
-        setLoading(false);
+        // console.log("data in fetchUser", data);
+        setUser(data.data);
+        setUserLoading(false);
       } catch (err: any) {
-        setError(err.message || "Something went wrong");
-        setLoading(false);
+        setUserError(err.message || "Something went wrong");
+        setUserLoading(false);
       }
     };
 
     fetchUser();
   }, [userId]);
 
-  return { user, loading, error };
+  return { user, userLoading, userError };
 };
 
 export const useFetchUsers = () => {
@@ -81,6 +88,7 @@ export const useFetchUsers = () => {
 
   return { users, loading, error };
 };
+
 export const useFetchGroups = () => {
   const [groups, setGroups] = useState([]);
   const [groupsLoading, setLoading] = useState(true);
@@ -110,13 +118,14 @@ export const useFetchGroups = () => {
   return { groupError, groupsLoading, groups, setGroups };
 };
 
-export const useFetchGroup = (groupId: string) => {
+export const useFetchGroup = (groupId: string | undefined) => {
   const [group, setGroup] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGroup = async () => {
+      if (!groupId) return null;
       try {
         if (!groupId) return;
         const response = await fetch(

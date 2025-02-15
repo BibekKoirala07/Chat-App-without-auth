@@ -47,12 +47,20 @@ const UserList = ({
     setIsModalOpen(false);
   };
 
-  console.log("users", users);
+  // console.log("users", users);
 
   const [friendsOrGroup, setFriendsOrGroup] = useState(
     location.pathname.includes("group") ? "Groups" : "Friends"
   );
   const { activeUsers } = useSocket();
+
+  const filteredUsers = users.filter((user: any) =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredGroups = groups.filter((group: any) =>
+    group.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <div className="p-6 bg-white rounded-lg min-h-screen shadow-lg">
       <div className="flex justify-between items-center">
@@ -100,7 +108,7 @@ const UserList = ({
       </div>
       {friendsOrGroup == "Friends" && (
         <div className="mt-6 space-y-4">
-          {users.map((user: any) => (
+          {filteredUsers.map((user: any) => (
             <Link
               to={"/chat/" + user._id}
               key={user._id}
@@ -160,7 +168,7 @@ const UserList = ({
 
       {friendsOrGroup == "Groups" && (
         <div className="mt-6 space-y-4">
-          {groups.map((group: any) => (
+          {filteredGroups.map((group: any) => (
             <Link
               to={"/group/" + group._id}
               key={group._id}

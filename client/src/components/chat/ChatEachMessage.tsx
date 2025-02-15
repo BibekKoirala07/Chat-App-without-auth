@@ -10,7 +10,7 @@ const ChatEachMessage = ({
 }) => {
   const { content, senderId, createdAt } = message;
   const { user } = useSocket();
-  if (!user) return null;
+  if (!user || !chatUser) return null;
   const isThisGuyASender = senderId._id.toString() == user?._id.toString();
   const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
   return (
@@ -22,8 +22,8 @@ const ChatEachMessage = ({
       <div className="flex-shrink-0">
         <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white">
           {isThisGuyASender
-            ? user.name.charAt(0).toUpperCase().toString()
-            : chatUser.name.charAt(0).toUpperCase().toString()}
+            ? user?.name.charAt(0).toUpperCase().toString()
+            : chatUser?.name.charAt(0).toUpperCase().toString()}
         </div>
       </div>
       <div

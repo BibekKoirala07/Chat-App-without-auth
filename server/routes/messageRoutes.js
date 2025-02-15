@@ -7,12 +7,12 @@ messageRoutes.get("/:receiverId", async (req, res) => {
     const { senderId } = req.query;
     const { receiverId } = req.params;
 
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+
     if (!senderId) {
       return res.status(400).json({ error: "Sender ID is required" });
     }
-
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10; // Default limit is 10 messages per page
 
     const skip = (page - 1) * limit;
 
