@@ -45,43 +45,44 @@ module.exports = function (io) {
     console.log("A user connected", socket.id);
 
     socket.on("setup", async (data) => {
-      const { name } = data;
-      console.log("Setup received for user:", name);
-      if (!name) {
-        return;
-      }
-
-      let user = await User.findOne({ name });
-
-      if (!user) {
-        user = await User.create({ name });
-        console.log("New user created:", user);
-      }
-
-      const userId = user._id;
-
-      if (connectedUserIdToSocketId.has(userId.toString())) {
-        const existingSocketId = connectedUserIdToSocketId.get(userId);
-
-        if (existingSocketId) {
-          io.emit("active-users", getActiveUsers());
-
-          console.log("User already connected with socket:", existingSocketId);
-          // Emit error to the current socket (avoid multiple connections for same user)
-          socket.emit("error", {
-            message: `User ${userId} is already connected with socket ${existingSocketId}.`,
-          });
-          return;
+      try {
+        const { name } = data;
+        console.log("Setup received for user:", name);
+        if (!name) {
+          socket.emit("setup-error", { message: "Name is not provided" });
         }
+
+        let user = await User.findOne({ name });
+
+        if (!user) {
+          user = await User.create({ name });
+        }
+
+        const userId = user._id;
+
+        if (connectedUserIdToSocketId.has(userId.toString())) {
+          const existingSocketId = connectedUserIdToSocketId.get(userId);
+
+          if (existingSocketId) {
+            io.emit("active-users", getActiveUsers());
+
+            socket.emit("setup-error", {
+              message: `User ${userId} is already connected with socket ${existingSocketId}.`,
+            });
+            return;
+          }
+        }
+
+        connectedUserIdToSocketId.set(userId.toString(), socket.id);
+
+        socket.emit("user-setup-complete", user);
+
+        io.emit("active-users", getActiveUsers());
+      } catch (error) {
+        socket.emit("setup-error", {
+          message: error.message || "Setup gone wrong",
+        });
       }
-
-      connectedUserIdToSocketId.set(userId.toString(), socket.id);
-
-      console.log("handleActiveUser", getActiveUsers());
-
-      socket.emit("user-setup-complete", user);
-
-      io.emit("active-users", getActiveUsers());
     });
 
     socket.on("typing", (data) => {
@@ -117,7 +118,10 @@ module.exports = function (io) {
       try {
         const { senderId, receiverId, content } = data;
 
-        console.log("senderId, all text", data);
+        if (!senderId || !receiverId || !content) {
+          throw new Error("All credentails not provided");
+        }
+
         const message = await Message.create({
           senderId,
           receiverId,
@@ -128,8 +132,6 @@ module.exports = function (io) {
           .populate("senderId", "name")
           .populate("receiverId", "name");
 
-        console.log("savedmessage", savedMessage);
-
         socket.emit("receive-message", { savedMessage });
 
         socket.emit("receive-user-message-for-user-list", {
@@ -137,8 +139,6 @@ module.exports = function (io) {
           receiverId,
           savedMessage,
         });
-
-        console.log("connectedUserIdToSocket", connectedUserIdToSocketId);
 
         const receiverSocketId = connectedUserIdToSocketId.get(
           receiverId.toString()
@@ -149,78 +149,77 @@ module.exports = function (io) {
             senderId,
             savedMessage,
           });
-          console.log("receiversocketId", receiverId, receiverSocketId);
           io.to(receiverSocketId).emit("receive-message", {
             savedMessage,
           });
         }
       } catch (error) {
         console.error("Error handling message:", error);
-        socket.emit("message-error", "Failed to send message");
+        socket.emit("send-message-error", {
+          message: error.message || "Something went wrong",
+        });
       }
     });
 
     socket.on("join-group", async (data) => {
-      const { groupId, userId } = data;
-      console.log("join-group", groupId, userId);
+      try {
+        const { groupId, userId } = data;
+        console.log("join-group", groupId, userId);
 
-      const chat = await Chat.findById(groupId).populate("members");
-      if (!chat) {
-        socket.emit("error", { message: "Group not found" });
-        return;
-      }
+        const chat = await Chat.findById(groupId).populate("members");
+        if (!chat) {
+          throw new Error("No such GroupId found");
+        }
 
-      const isMember = chat.members.some(
-        (member) => member._id.toString() === userId
-      );
+        const isMember = chat.members.some(
+          (member) => member._id.toString() === userId
+        );
 
-      if (!isMember) {
-        socket.emit("error", {
-          message: "You are not a member of this group",
+        if (!isMember) {
+          throw new Error("You aren't the members of this group");
+        }
+
+        if (!activeRooms.has(groupId)) {
+          activeRooms.set(groupId, new Set());
+        }
+
+        const roomMembers = activeRooms.get(groupId);
+        if (roomMembers.has(userId)) {
+          throw new Error("You are already member of this group");
+        }
+
+        socket.join(groupId);
+        roomMembers.add(userId);
+
+        socket.emit("room-joined", {
+          groupId,
+          message: `Successfully joined group ${chat.name}`,
+          members: getRoomMembers(groupId),
         });
-        return;
-      }
 
-      if (!activeRooms.has(groupId)) {
-        activeRooms.set(groupId, new Set());
-      }
-
-      const roomMembers = activeRooms.get(groupId);
-      if (roomMembers.has(userId)) {
-        socket.emit("already-joined", {
-          message: "You are already in this group",
+        io.to(groupId).emit("room-joined-notice", {
+          userId,
+          message: `${userId} has joined the group`,
+          members: getRoomMembers(groupId),
         });
-        return;
+      } catch (error) {
+        socket.emit("join-group-error", {
+          message: error.message || "Join group error went wrong",
+        });
       }
-
-      socket.join(groupId);
-      roomMembers.add(userId);
-
-      socket.emit("room-joined", {
-        groupId,
-        message: `Successfully joined group ${chat.name}`,
-        members: getRoomMembers(groupId),
-      });
-
-      socket.broadcast.to(groupId).emit("room-joined-notice", {
-        userId,
-        message: `${userId} has joined the group`,
-        members: getRoomMembers(groupId),
-      });
-      console.log("activeRooms after joining room:", activeRooms);
     });
 
     socket.on("send-group-message", async (data) => {
       try {
         const { groupId, content, senderId } = data;
 
+        if (!groupId || !content || !senderId) {
+          throw new Error("All Credentails not provided");
+        }
+
         const roomMembers = activeRooms.get(groupId);
         if (!roomMembers?.has(senderId)) {
-          socket.emit("error", {
-            message: "You must join the group to send messages",
-          });
-          console.log("user ta room ma nai rahinaxa");
-          return;
+          throw new Error("You must be in this group to send the message");
         }
 
         const message = await Message.create({
@@ -254,8 +253,9 @@ module.exports = function (io) {
           chat,
         });
       } catch (error) {
-        console.error("Group message error:", error);
-        socket.emit("error", { message: "Failed to send message" });
+        socket.emit("send-group-message-error", {
+          message: error.message || "Send group message gone wrong",
+        });
       }
     });
 
@@ -263,10 +263,13 @@ module.exports = function (io) {
       try {
         const { groupId, userId } = data;
 
+        if (!groupId || !userId) {
+          throw new Error("Please provide all credentails");
+        }
+
         const roomMembers = activeRooms.get(groupId);
         if (!roomMembers?.has(userId)) {
-          socket.emit("error", { message: "You are not in this group" });
-          return;
+          throw new Error("You are not a member of this group");
         }
 
         socket.leave(groupId);
@@ -286,29 +289,38 @@ module.exports = function (io) {
           message: `A user has left the group`,
           members: getRoomMembers(groupId),
         });
-        console.log("activeRooms after leaving", activeRooms);
       } catch (error) {
-        console.error("Leave group error:", error);
-        socket.emit("error", { message: "Failed to leave group" });
+        socket.emit("leave-group-error", {
+          message: error.message || "Leave Group gone wrong",
+        });
       }
     });
 
     socket.on("disconnect", () => {
-      const disconnectedUserId = findUserIdFromSocketId(socket.id);
-      deleteUserIdFromConnectedUserIdToSocketIdMap(disconnectedUserId);
-      removeUserFromAllRooms(disconnectedUserId);
+      try {
+        const disconnectedUserId = findUserIdFromSocketId(socket.id);
+        deleteUserIdFromConnectedUserIdToSocketIdMap(disconnectedUserId);
+        removeUserFromAllRooms(disconnectedUserId);
 
-      socket.emit("user-disconnected", {
-        message: `you ${disconnectedUserId} just disconnected`,
-      });
-      socket.broadcast.emit("user-disconnected-notice", {
-        message: `The user ${disconnectedUserId} just left`,
-      });
-      console.log("activeRooms after disconnecting", activeRooms);
-      console.log("getActiveUsers", getActiveUsers());
-      io.emit("active-users", getActiveUsers());
+        activeRooms.forEach((members, roomId) => {
+          if (members.has(disconnectedUserId)) {
+            io.to(roomId).emit("room-left-notice", {
+              userId: disconnectedUserId,
+              message: `User ${disconnectedUserId} has left the room.`,
+              members: getRoomMembers(roomId),
+            });
+          }
+        });
+
+        socket.broadcast.emit("user-disconnected-notice", {
+          message: `The user ${disconnectedUserId} just left`,
+        });
+        io.emit("active-users", getActiveUsers());
+      } catch (error) {
+        socket.emit("disconnect-error", {
+          message: error.message || "Disconnect user gone wrong",
+        });
+      }
     });
-
-    io.emit("active-users", getActiveUsers());
   });
 };

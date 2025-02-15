@@ -5,13 +5,12 @@ const GroupContainerHeader = ({
   groupInfo: any;
   groupActiveMembers: string[];
 }) => {
+  console.log("grooupActiveMembers", groupActiveMembers);
   if (!groupInfo) return null;
-  // const totalMembers = groupInfo.members?.length || 0;
   const onlineMembers =
     groupInfo.members?.filter((member: string) =>
       groupActiveMembers.includes(member)
     ).length || 0;
-  // there are members in groupInfo and you need to check how many members are online ?
   return (
     <div className="flex items-center justify-between p-4 border-b border-gray-800">
       <div className="flex items-center gap-3">

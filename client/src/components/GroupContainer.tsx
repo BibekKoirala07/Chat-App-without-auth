@@ -49,6 +49,7 @@ const GroupContainer = () => {
       );
 
       socket.on("room-joined-notice", (data: any) => {
+        setGroupActiveMembers(data.members);
         console.log("data in room-joined-notice", data);
       });
 
@@ -109,10 +110,6 @@ const GroupContainer = () => {
     setPage(1);
     fetchMessages(1);
   }, [groupId]);
-
-  // useEffect(() => {
-  //   scrollToBottom();
-  // }, [groupMessages]);
 
   useEffect(() => {
     const chatContainer = chatContainerRef.current;
