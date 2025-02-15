@@ -28,8 +28,6 @@ chatRoutes.get("/getAllChats/:senderId", async (req, res) => {
       .populate("latestMessage.senderId", "name")
       .sort({ "latestMessage.timeStamp": -1 });
 
-    // console.log("chats", chats);
-
     return res.json({ success: true, data: chats });
   } catch (error) {
     console.error("Error fetching chats:", error);
@@ -40,7 +38,6 @@ chatRoutes.get("/getAllChats/:senderId", async (req, res) => {
 chatRoutes.post("/create/:senderId", async (req, res) => {
   const { senderId } = req.params;
   const { members, groupName } = req.body;
-  // console.log("senderId", senderId, members, groupName);
 
   if (!senderId || !members || !groupName) {
     return res
@@ -82,20 +79,34 @@ chatRoutes.get("/getAllMessages/:chatId", async (req, res) => {
     return res.status(400).json({ error: "chatId is required" });
   }
 
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const skip = (page - 1) * limit;
+
   try {
     const chat = await Chat.findById(chatId);
     if (!chat) {
       return res.status(404).json({ error: "Chat not found" });
     }
 
-    const messages = await Message.find({ chatId }).populate(
-      "senderId",
-      "name"
-    );
+    const messages = await Message.find({ chatId })
+      .skip(skip)
+      .limit(limit)
+      .populate("senderId", "name");
 
-    // console.log("messages", messages);
+    const totalMessages = await Message.countDocuments({ chatId });
 
-    return res.json({ success: true, data: messages });
+    return res.json({
+      success: true,
+      data: messages,
+      pagination: {
+        totalMessages,
+        totalPages: Math.ceil(totalMessages / limit),
+        currentPage: page,
+        limit,
+      },
+    });
   } catch (error) {
     console.error("Error fetching messages:", error);
     return res.status(500).json({ error: "Failed to fetch messages" });

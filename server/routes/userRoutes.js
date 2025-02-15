@@ -40,7 +40,17 @@ userRoutes.get("/getAllUsers/:id", async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.params.id); // Convert to ObjectId
 
-    const users = await User.find({ _id: { $ne: userId } }).lean();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10; // Default limit is 10 users per page
+
+    const skip = (page - 1) * limit;
+
+    const users = await User.find({ _id: { $ne: userId } })
+      .skip(skip) // Skip users for pagination
+      .limit(limit) // Limit the number of users returned
+      .lean();
+
+    const totalUsers = await User.countDocuments({ _id: { $ne: userId } });
 
     // const responseData = await Promise.all(
     //   users.map(async (user) => {
@@ -58,9 +68,16 @@ userRoutes.get("/getAllUsers/:id", async (req, res) => {
 
     const responseData = users;
 
-    // console.log("data", responseData);
-
-    res.status(200).json({ success: true, data: responseData });
+    res.status(200).json({
+      success: true,
+      data: responseData,
+      pagination: {
+        totalUsers,
+        totalPages: Math.ceil(totalUsers / limit),
+        currentPage: page,
+        limit,
+      },
+    });
   } catch (error) {
     console.error("Error occurred:", error);
     res.status(500).json({

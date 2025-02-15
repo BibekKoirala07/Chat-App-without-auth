@@ -6,12 +6,9 @@ import { useEffect, useState } from "react";
 const AppLayout = () => {
   const { users } = useFetchUsers();
   const { groups, setGroups } = useFetchGroups();
-  console.log("groups", groups);
 
   const location = useLocation();
-  console.log("location", location);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  console.log("windowWidth", windowWidth);
 
   useEffect(() => {
     const handleResize = () => {
@@ -25,6 +22,7 @@ const AppLayout = () => {
   const shouldHideUserList =
     (location.pathname.includes("group") && windowWidth < 768) ||
     (location.pathname.includes("chat") && windowWidth < 768);
+
   return (
     <div className="grid grid-cols-7 min-h-screen">
       {!shouldHideUserList && (

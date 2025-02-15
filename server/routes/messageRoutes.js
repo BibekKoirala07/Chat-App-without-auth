@@ -11,6 +11,11 @@ messageRoutes.get("/:receiverId", async (req, res) => {
       return res.status(400).json({ error: "Sender ID is required" });
     }
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10; // Default limit is 10 messages per page
+
+    const skip = (page - 1) * limit;
+
     const messages = await Message.find({
       $or: [
         { senderId, receiverId },
@@ -18,12 +23,28 @@ messageRoutes.get("/:receiverId", async (req, res) => {
       ],
     })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate("senderId", "name")
       .populate("receiverId", "name");
 
-    // console.log("message", messages);
+    const totalMessages = await Message.countDocuments({
+      $or: [
+        { senderId, receiverId },
+        { senderId: receiverId, receiverId: senderId },
+      ],
+    });
 
-    return res.json({ success: true, data: messages });
+    return res.json({
+      success: true,
+      data: messages,
+      pagination: {
+        totalMessages,
+        totalPages: Math.ceil(totalMessages / limit),
+        currentPage: page,
+        limit,
+      },
+    });
   } catch (error) {
     console.error("Error fetching messages:", error);
     res.status(500).json({ error: "Internal server error" });
