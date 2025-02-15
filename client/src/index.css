@@ -1,1 +1,32 @@
 @import "tailwindcss";
+.custom-scrollbar {
+  overflow-y: auto;
+  padding: 1rem; /* p-4 equivalent */
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* space-y-0.5 equivalent */
+}
+
+/* Scrollbar styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px; /* w-1 equivalent */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  border-radius: 9999px; /* rounded-full */
+  background: #111827; /* bg-gray-900 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 9999px; /* rounded-full */
+  background: #e5e7eb; /* bg-gray-200 */
+}
+
+/* Dark mode support */
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: #374151; /* bg-neutral-700 */
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #6b7280; /* bg-neutral-500 */
+}

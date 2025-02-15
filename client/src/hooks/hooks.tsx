@@ -86,7 +86,7 @@ export const useFetchUsers = () => {
     fetchUsers();
   }, [user]);
 
-  return { users, loading, error };
+  return { users, setUsers, loading, error };
 };
 
 export const useFetchGroups = () => {

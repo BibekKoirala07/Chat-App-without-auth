@@ -22,7 +22,9 @@ const ChatSendMessageFooter = ({
   const { userId } = useParams();
   const { socket, user } = useSocket();
   const [messageText, setMessageText] = useState("");
-  const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState(true);
+  const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState(false);
+
+  const highestMessageLength = 30;
 
   useEffect(() => {
     if (!socket) return;
@@ -69,7 +71,7 @@ const ChatSendMessageFooter = ({
   };
 
   return (
-    <div className="p-4 border-t border-gray-800">
+    <div className="p-4 relative border-t border-gray-800" onClick={() => {}}>
       <div className="flex items-center gap-4">
         <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
           <svg
@@ -91,17 +93,31 @@ const ChatSendMessageFooter = ({
           placeholder="Type your message..."
           value={messageText}
           onKeyDown={handleKeyDown}
-          onChange={(e) => setMessageText(e.target.value)}
-          className="flex-1 bg-gray-800 rounded-full px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onChange={(e) => {
+            if (e.target.value.length <= highestMessageLength)
+              setMessageText(e.target.value);
+          }}
+          //   className={`focus:ring-blue-500 ${
+          //     messageText.length && "outline-red-500 border-2"
+          //   } flex-1 bg-gray-800 rounded-full px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 `}
+          className={`focus:ring-blue-500 ${
+            messageText.length >= highestMessageLength
+              ? " focus:ring-red-500 focus:border-red-500"
+              : "border-transparent"
+          } flex-1 bg-gray-800 rounded-full px-4 py-2 text-white placeholder-gray-400 
+                      focus:outline-none focus:ring-2 transition-all duration-200 border-2`}
         />
 
         {isEmojiPickerVisible && (
-          <div className="absolute bottom-full mb-2 left-0 z-10">
+          <div className="absolute bottom-full right-9 mb-2  z-10">
             <EmojiPicker onEmojiClick={handleEmojiClick} />
           </div>
         )}
 
-        <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+        <button
+          onClick={() => setIsEmojiPickerVisible((prevState) => !prevState)}
+          className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+        >
           <svg
             className="w-5 h-5 text-gray-400"
             fill="none"

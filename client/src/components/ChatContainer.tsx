@@ -32,22 +32,23 @@ const ChatContainer = () => {
 
   const { user: chatUser } = useFetchUser(userId);
   const limit = 10;
+
   const fetchMessages = async (pageNum: number) => {
     const messageResponse = await fetch(
       `${backendUrl}/api/messages/${userId}?senderId=${user?._id}&page=${pageNum}&limit=${limit}`
     );
     if (!messageResponse.ok) throw new Error("Failed to fetch messages");
     const messageData = await messageResponse.json();
-    console.log("message in chatContainer", messageData);
+    // console.log("message in chatContainer", messageData);
 
     if (messageResponse.ok) {
       const { data, pagination } = messageData;
-      console.log("data in chat Group", data, pagination);
+      // console.log("data in chat Group", data, pagination);
       const { totalPages, currentPage } = pagination;
       const orderedMessages = [...data].reverse();
       if (currentPage == 1) {
         setMessages(orderedMessages);
-        console.log("currentPage", currentPage);
+        // console.log("currentPage", currentPage);
         setTimeout(scrollToBottom, 20);
       } else {
         setMessages((prevMessages) => [...orderedMessages, ...prevMessages]);
@@ -57,7 +58,7 @@ const ChatContainer = () => {
     }
   };
 
-  console.log("messages", messages);
+  // console.log("messages", messages);
 
   useEffect(() => {
     if (!userId || !user?._id) return;
@@ -72,7 +73,7 @@ const ChatContainer = () => {
     socket.on("user-typing", (data: any) => {
       const { receiverId, isTyping } = data;
       if (receiverId == user?._id) {
-        setIsTyping(isTyping);
+        // setIsTyping(isTyping);
       }
     });
 
@@ -126,7 +127,7 @@ const ChatContainer = () => {
   useEffect(() => {
     if (isTyping) {
       const typingSound = new Audio("/typing.mp3"); // Path to your typing sound file
-      typingSound.play();
+      // typingSound.play();
     }
   }, [isTyping]);
 
@@ -138,7 +139,7 @@ const ChatContainer = () => {
 
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className="flex-1 overflow-y-auto  custom-scrollbar p-4 space-y-0"
       >
         {hasMore && (
           <div className="flex justify-center items-center py-4">
@@ -151,19 +152,29 @@ const ChatContainer = () => {
             <p className="text-gray-500">No more messages to load.</p>
           </div>
         )}
-        {messages.map((message) => (
-          <div key={message._id}>
-            <ChatEachMessage chatUser={chatUser} message={message} />
-            <div ref={messagesEndRef} />
-          </div>
-        ))}
-        {isTyping && (
+        {messages.map((message, index: number) => {
+          let previousMessage;
+          if (index.toString() != "0") {
+            previousMessage = messages[index - 1];
+          }
+          return (
+            <div key={message._id} className="space-y-0">
+              <ChatEachMessage
+                chatUser={chatUser}
+                previousMessage={previousMessage}
+                message={message}
+              />
+              <div ref={messagesEndRef} />
+            </div>
+          );
+        })}
+        {/* {isTyping && (
           <div className="flex mb-10 justify-start items-center space-x-3 py-2">
             <div className="w-3 h-3 rounded-full bg-gray-300 animate-pulse delay-75"></div>
             <div className="w-3 h-3 rounded-full bg-gray-300 animate-pulse delay-150"></div>
             <div className="w-3 h-3 rounded-full bg-gray-300 animate-pulse delay-225"></div>
           </div>
-        )}
+        )} */}
       </div>
 
       <ChatSendMessageFooter isTyping={isTyping} setIsTyping={setIsTyping} />
@@ -172,3 +183,5 @@ const ChatContainer = () => {
 };
 
 export default ChatContainer;
+
+// Check if the current message sender is the same as the previous message sender

@@ -2,6 +2,7 @@ const express = require("express");
 const userRoutes = express.Router();
 const User = require("../models/User");
 const { default: mongoose } = require("mongoose");
+const Message = require("../models/Message");
 
 userRoutes.post("/add", async (req, res) => {
   try {
@@ -38,39 +39,43 @@ userRoutes.get("/getUser/:id", async (req, res) => {
 
 userRoutes.get("/getAllUsers/:id", async (req, res) => {
   try {
-    const userId = new mongoose.Types.ObjectId(req.params.id); // Convert to ObjectId
+    const senderId = new mongoose.Types.ObjectId(req.params.id);
 
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10; // Default limit is 10 users per page
+    const limit = parseInt(req.query.limit) || 10;
 
     const skip = (page - 1) * limit;
 
-    const users = await User.find({ _id: { $ne: userId } })
+    const users = await User.find({ _id: { $ne: senderId } })
       .skip(skip) // Skip users for pagination
       .limit(limit) // Limit the number of users returned
       .lean();
 
-    const totalUsers = await User.countDocuments({ _id: { $ne: userId } });
+    const usersWithLatestMessage = await Promise.all(
+      users.map(async (user) => {
+        const latestMessage = await Message.findOne({
+          $or: [
+            { senderId, receiverId: user._id },
+            { senderId: user._id, receiverId: senderId },
+          ],
+        })
+          .sort({ createdAt: -1 })
+          .populate("senderId", "name")
+          .populate("receiverId", "name")
+          .lean();
 
-    // const responseData = await Promise.all(
-    //   users.map(async (user) => {
-    //     // Fetch chat where both users are members
-    //     const chat = await Chat.findOne({
-    //       members: { $all: [userId, user._id] },
-    //     }).lean();
+        return {
+          ...user,
+          latestMessage: latestMessage || null, // If no message, append null
+        };
+      })
+    );
 
-    //     return {
-    //       ...user,
-    //       chatId: chat ? chat : null,
-    //     };
-    //   })
-    // );
-
-    const responseData = users;
+    const totalUsers = await User.countDocuments({ _id: { $ne: senderId } });
 
     res.status(200).json({
       success: true,
-      data: responseData,
+      data: usersWithLatestMessage,
       pagination: {
         totalUsers,
         totalPages: Math.ceil(totalUsers / limit),

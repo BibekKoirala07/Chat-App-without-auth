@@ -1,5 +1,5 @@
 import { ExternalLink, Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useSocket } from "../store/SocketContext";
 import AddGroupModal from "./AddGroupModal";
@@ -11,17 +11,19 @@ const backendUrl =
 
 const UserList = ({
   users,
+  setUsers,
   groups,
   setGroups,
 }: {
   users: any;
+  setUsers: any;
   groups: any;
   setGroups: any;
 }) => {
   const location = useLocation();
   // console.log("location", location);
   const { userId, groupId } = useParams();
-  const { user } = useSocket();
+  const { user, socket } = useSocket();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false); // To control modal visibility
 
@@ -47,7 +49,37 @@ const UserList = ({
     setIsModalOpen(false);
   };
 
-  // console.log("users", users);
+  console.log("users", users);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("receive-user-message-for-user-list", (data: any) => {
+      console.log("receive-user-message-for-user-list", data);
+      const { savedMessage, senderId, receiverId } = data;
+      setUsers((prevState: any) => {
+        return prevState.map((each: any) => {
+          if (each._id == senderId || each._id == receiverId) {
+            return { ...each, latestMessage: savedMessage };
+          }
+          return each;
+        });
+      });
+    });
+    socket.on("receive-group-message-for-group-list", (data: any) => {
+      console.log("receive-group-message-for-group-list", data);
+      const { chat } = data;
+      setGroups((prevState: any[]) => {
+        return prevState.map((each: any) => {
+          if (each._id != chat._id) {
+            return each;
+          } else {
+            return { ...each, latestMessage: chat.latestMessage };
+          }
+        });
+      });
+    });
+  }, [socket]);
 
   const [friendsOrGroup, setFriendsOrGroup] = useState(
     location.pathname.includes("group") ? "Groups" : "Friends"
@@ -61,8 +93,10 @@ const UserList = ({
   const filteredGroups = groups.filter((group: any) =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  console.log("filteredGoupso", filteredGroups);
   return (
-    <div className="p-6 bg-white rounded-lg min-h-screen shadow-lg">
+    <div className="p-6  rounded-lg h-screen shadow-lg">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Chats</h1>
         <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -147,7 +181,7 @@ const UserList = ({
                   {user.name}
                 </h2>
                 <p className="text-sm text-gray-500 truncate">
-                  {"I am having a problem"}
+                  {user.latestMessage.content}
                 </p>
               </div>
             </Link>
@@ -207,7 +241,7 @@ const UserList = ({
                   {group.name}
                 </h2>
                 <p className="text-sm text-gray-500 truncate">
-                  {"I am having a problem"}
+                  {group.latestMessage.content}
                 </p>
               </div>
             </Link>

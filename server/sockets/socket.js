@@ -33,7 +33,6 @@ const getActiveUsers = () => {
   for (let [userId, socketId] of connectedUserIdToSocketId.entries()) {
     arr.push(userId);
   }
-
   return arr;
 };
 
@@ -129,21 +128,15 @@ module.exports = function (io) {
           .populate("senderId", "name")
           .populate("receiverId", "name");
 
-        // const updatedChat = await Chat.findByIdAndUpdate(
-        //   chatId,
-        //   {
-        //     latestMessage: {
-        //       content,
-        //       senderId,
-        //       timeStamp: new Date(),
-        //     },
-        //   },
-        //   { new: true }
-        // );
-
         console.log("savedmessage", savedMessage);
 
         socket.emit("receive-message", { savedMessage });
+
+        socket.emit("receive-user-message-for-user-list", {
+          senderId,
+          receiverId,
+          savedMessage,
+        });
 
         console.log("connectedUserIdToSocket", connectedUserIdToSocketId);
 
@@ -151,6 +144,11 @@ module.exports = function (io) {
           receiverId.toString()
         );
         if (receiverSocketId) {
+          io.to(receiverSocketId).emit("receive-user-message-for-user-list", {
+            receiverId,
+            senderId,
+            savedMessage,
+          });
           console.log("receiversocketId", receiverId, receiverSocketId);
           io.to(receiverSocketId).emit("receive-message", {
             savedMessage,
@@ -230,6 +228,7 @@ module.exports = function (io) {
           chatId: groupId,
           content,
         });
+
         const savedMessage = await Message.findById(message._id)
           .populate("senderId", "name")
           .populate("chatId", "name");
@@ -237,6 +236,22 @@ module.exports = function (io) {
         io.to(groupId).emit("receive-group-message", {
           message: savedMessage,
           activeMembers: getRoomMembers(groupId),
+        });
+
+        const chat = await Chat.findByIdAndUpdate(
+          groupId,
+          {
+            latestMessage: {
+              content,
+              senderId,
+              timeStamp: savedMessage.createdAt,
+            },
+          },
+          { new: true }
+        ).populate("members", "_id");
+
+        io.to(groupId).emit("receive-group-message-for-group-list", {
+          chat,
         });
       } catch (error) {
         console.error("Group message error:", error);
