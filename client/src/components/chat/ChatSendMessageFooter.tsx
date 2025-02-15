@@ -1,11 +1,46 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSocket } from "../../store/SocketContext";
 import { useParams } from "react-router-dom";
 
-const ChatSendMessageFooter = () => {
+import EmojiPicker from "emoji-picker-react";
+
+function EmojiPickerComponent() {
+  return (
+    <div>
+      <EmojiPicker />
+    </div>
+  );
+}
+
+const ChatSendMessageFooter = ({
+  isTyping,
+  setIsTyping,
+}: {
+  isTyping: boolean;
+  setIsTyping: any;
+}) => {
   const { userId } = useParams();
   const { socket, user } = useSocket();
   const [messageText, setMessageText] = useState("");
+  const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState(true);
+
+  useEffect(() => {
+    if (!socket) return;
+    if (messageText.trim()) {
+      if (!isTyping) {
+        setIsTyping(true);
+        socket.emit("typing", { senderId: user?.name, receiverId: userId });
+      }
+    } else {
+      if (isTyping) {
+        setIsTyping(false);
+        socket.emit("stop-typing", {
+          senderId: user?.name,
+          receiverId: userId,
+        });
+      }
+    }
+  }, [messageText, isTyping, socket, setIsTyping, user?.name, userId]);
   const sendMessage = () => {
     if (!socket) return;
     if (!messageText.trim()) return;
@@ -27,6 +62,10 @@ const ChatSendMessageFooter = () => {
     if (event.key === "Enter" && messageText.trim() !== "") {
       sendMessage();
     }
+  };
+
+  const handleEmojiClick = (emoji: any) => {
+    setMessageText(messageText + emoji.emoji); // Append the selected emoji
   };
 
   return (
@@ -55,6 +94,13 @@ const ChatSendMessageFooter = () => {
           onChange={(e) => setMessageText(e.target.value)}
           className="flex-1 bg-gray-800 rounded-full px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+
+        {isEmojiPickerVisible && (
+          <div className="absolute bottom-full mb-2 left-0 z-10">
+            <EmojiPicker onEmojiClick={handleEmojiClick} />
+          </div>
+        )}
+
         <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
           <svg
             className="w-5 h-5 text-gray-400"

@@ -17,6 +17,8 @@ const GroupContainer = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  console.log("page", page);
+
   const [hasMore, setHasMore] = useState(true);
 
   const [groupMessages, setGroupMessages] = useState<any[]>([]);

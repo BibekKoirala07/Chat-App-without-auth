@@ -17,6 +17,7 @@ const ChatContainer = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState<number>(1);
+  const [isTyping, setIsTyping] = useState(false);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -68,6 +69,13 @@ const ChatContainer = () => {
   useEffect(() => {
     if (!socket) return;
 
+    socket.on("user-typing", (data: any) => {
+      const { receiverId, isTyping } = data;
+      if (receiverId == user?._id) {
+        setIsTyping(isTyping);
+      }
+    });
+
     socket.on("receive-message", (data: any) => {
       console.log("data in recieve message", data);
       const { savedMessage } = data;
@@ -114,6 +122,14 @@ const ChatContainer = () => {
 
   if (!userId) return null;
   if (!user?._id) return null;
+
+  useEffect(() => {
+    if (isTyping) {
+      const typingSound = new Audio("/typing.mp3"); // Path to your typing sound file
+      typingSound.play();
+    }
+  }, [isTyping]);
+
   return (
     <div className="flex flex-col h-screen bg-gray-900">
       <div className="flex-none">
@@ -141,9 +157,16 @@ const ChatContainer = () => {
             <div ref={messagesEndRef} />
           </div>
         ))}
+        {isTyping && (
+          <div className="flex mb-10 justify-start items-center space-x-3 py-2">
+            <div className="w-3 h-3 rounded-full bg-gray-300 animate-pulse delay-75"></div>
+            <div className="w-3 h-3 rounded-full bg-gray-300 animate-pulse delay-150"></div>
+            <div className="w-3 h-3 rounded-full bg-gray-300 animate-pulse delay-225"></div>
+          </div>
+        )}
       </div>
 
-      <ChatSendMessageFooter />
+      <ChatSendMessageFooter isTyping={isTyping} setIsTyping={setIsTyping} />
     </div>
   );
 };

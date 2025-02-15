@@ -85,6 +85,34 @@ module.exports = function (io) {
       io.emit("active-users", getActiveUsers());
     });
 
+    socket.on("typing", (data) => {
+      const { senderId, receiverId } = data;
+      const receiverSocketId = connectedUserIdToSocketId.get(
+        receiverId.toString()
+      );
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("user-typing", {
+          senderId,
+          receiverId,
+          isTyping: true,
+        });
+      }
+    });
+
+    socket.on("stop-typing", (data) => {
+      const { senderId, receiverId } = data;
+      const receiverSocketId = connectedUserIdToSocketId.get(
+        receiverId.toString()
+      );
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("user-typing", {
+          senderId,
+          receiverId,
+          isTyping: false,
+        });
+      }
+    });
+
     socket.on("send-message", async (data) => {
       console.log("sendmessage", data);
       try {
