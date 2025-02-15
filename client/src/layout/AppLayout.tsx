@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import UserList from "../components/UserList";
-import { useFetchGroups, useFetchUsers, useLayoutLogic } from "../hooks/hooks";
+import { useFetchGroups, useFetchUsers } from "../hooks/hooks";
 import { useEffect, useState } from "react";
 
 const AppLayout = () => {
