@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "../store/SocketContext";
 import backendURL from "../utils/apiRoutes";
+import { useLocation } from "react-router-dom";
 
 const backendUrl =
   import.meta.env.MODE === "production"
@@ -76,7 +77,7 @@ export const useFetchUsers = () => {
     };
 
     fetchUsers();
-  }, []);
+  }, [user]);
 
   return { users, loading, error };
 };
@@ -104,7 +105,7 @@ export const useFetchGroups = () => {
     };
 
     fetchUsers();
-  }, []);
+  }, [user?._id]);
 
   return { groupError, groupsLoading, groups, setGroups };
 };
@@ -141,4 +142,28 @@ export const useFetchGroup = (groupId: string) => {
   }, [groupId]);
 
   return { group, loading, error };
+};
+
+export const useLayoutLogic = () => {
+  const location = useLocation();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isGroupRoute = location.pathname.includes("/group/");
+  const isMobile = windowWidth < 1024;
+  const shouldHideUserList = isGroupRoute || isMobile;
+
+  return {
+    shouldHideUserList,
+    getMainClassName: () =>
+      `col-span-7 ${!shouldHideUserList ? "lg:col-span-4" : ""} min-h-screen`,
+  };
 };

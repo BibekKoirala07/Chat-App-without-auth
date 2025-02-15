@@ -1,26 +1,42 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import UserList from "../components/UserList";
-import { useFetchGroups, useFetchUsers } from "../hooks/hooks";
+import { useFetchGroups, useFetchUsers, useLayoutLogic } from "../hooks/hooks";
+import { useEffect, useState } from "react";
 
 const AppLayout = () => {
-  // const location = useLocation();
-
-  const { users } = useFetchUsers(); // Use the hook here
+  const { users } = useFetchUsers();
   const { groups, setGroups } = useFetchGroups();
+  console.log("groups", groups);
 
-  // console.log("groups", groups);
+  const location = useLocation();
+  console.log("location", location);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  console.log("windowWidth", windowWidth);
 
-  // const shouldHideUserList =
-  //   location.pathname.includes("chat") || location.pathname.includes("group");
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
 
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const shouldHideUserList =
+    (location.pathname.includes("group") && windowWidth < 768) ||
+    (location.pathname.includes("chat") && windowWidth < 768);
   return (
     <div className="grid grid-cols-7 min-h-screen">
-      {
-        <div className="col-span-7 lg:col-span-3">
+      {!shouldHideUserList && (
+        <div
+          className={`col-span-7 md:col-span-3  pt-6 ${
+            location.pathname.includes("chat") && "hidden md:block"
+          }`}
+        >
           <UserList users={users} groups={groups} setGroups={setGroups} />
         </div>
-      }
-      <main className="col-span-7 lg:col-span-4 min-h-screen">
+      )}
+      <main className="col-span-7 md:col-span-4 min-h-screen">
         <Outlet />
       </main>
     </div>

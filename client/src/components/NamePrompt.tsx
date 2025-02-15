@@ -5,6 +5,7 @@ const NamePrompt = () => {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const { connectSocket } = useSocket();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
@@ -12,6 +13,7 @@ const NamePrompt = () => {
       setError("Name must be at least 3 characters long");
       return;
     }
+    setLoading(true);
     connectSocket(name);
   };
 
@@ -33,13 +35,16 @@ const NamePrompt = () => {
               placeholder="Your name"
               autoFocus
             />
+            <p className="text-red-400 text-sm my-2 p-2 rounded-xl text-center">
+              you need to have unique name
+            </p>
             {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
           </div>
           <button
             type="submit"
             className="w-full hover:opacity-0.8 cursor-pointer bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Join Chat
+            {loading ? "Requesting..." : "Join Chat"}
           </button>
         </form>
       </div>

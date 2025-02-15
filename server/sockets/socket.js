@@ -5,6 +5,18 @@ const User = require("../models/User");
 const connectedUserIdToSocketId = new Map();
 const activeRooms = new Map();
 
+const findUserIdFromSocketId = (socketId) => {
+  for (let [userId, socketIdInMap] of connectedUserIdToSocketId.entries()) {
+    if (socketIdInMap === socketId) {
+      return userId;
+    }
+  }
+};
+
+const deleteUserIdFromConnectedUserIdToSocketIdMap = (userId) => {
+  connectedUserIdToSocketId.delete(userId);
+};
+
 const removeUserFromAllRooms = (userId) => {
   for (const [roomId, members] of activeRooms.entries()) {
     if (members.has(userId)) {
@@ -16,14 +28,12 @@ const removeUserFromAllRooms = (userId) => {
   }
 };
 
-// const getActiveUsers = () => Array.from(connectedUsers.keys());
-
-const handleActiveUsers = () => {
+const getActiveUsers = () => {
   const arr = [];
   for (let [userId, socketId] of connectedUserIdToSocketId.entries()) {
     arr.push(userId);
   }
-  // console.log("arr", arr);
+
   return arr;
 };
 
@@ -55,7 +65,7 @@ module.exports = function (io) {
         const existingSocketId = connectedUserIdToSocketId.get(userId);
 
         if (existingSocketId) {
-          io.emit("active-users", handleActiveUsers());
+          io.emit("active-users", getActiveUsers());
 
           console.log("User already connected with socket:", existingSocketId);
           // Emit error to the current socket (avoid multiple connections for same user)
@@ -68,11 +78,11 @@ module.exports = function (io) {
 
       connectedUserIdToSocketId.set(userId.toString(), socket.id);
 
-      console.log("handleActiveUser", handleActiveUsers());
+      console.log("handleActiveUser", getActiveUsers());
 
       socket.emit("user-setup-complete", user);
 
-      io.emit("active-users", handleActiveUsers());
+      io.emit("active-users", getActiveUsers());
     });
 
     socket.on("send-message", async (data) => {
@@ -233,6 +243,7 @@ module.exports = function (io) {
           message: `A user has left the group`,
           members: getRoomMembers(groupId),
         });
+        console.log("activeRooms after leaving", activeRooms);
       } catch (error) {
         console.error("Leave group error:", error);
         socket.emit("error", { message: "Failed to leave group" });
@@ -240,25 +251,21 @@ module.exports = function (io) {
     });
 
     socket.on("disconnect", () => {
-      const userId = socket.userId;
-      if (userId) {
-        connectedUsers.delete(userId);
-        removeUserFromAllRooms(userId);
+      const disconnectedUserId = findUserIdFromSocketId(socket.id);
+      deleteUserIdFromConnectedUserIdToSocketIdMap(disconnectedUserId);
+      removeUserFromAllRooms(disconnectedUserId);
 
-        for (const [roomId, members] of activeRooms.entries()) {
-          if (members.has(userId)) {
-            io.to(roomId).emit("room-left-notice", {
-              userId,
-              message: "User disconnected",
-              members: getRoomMembers(roomId),
-            });
-          }
-        }
-
-        io.emit("active-users", handleActiveUsers());
-      }
+      socket.emit("user-disconnected", {
+        message: `you ${disconnectedUserId} just disconnected`,
+      });
+      socket.broadcast.emit("user-disconnected-notice", {
+        message: `The user ${disconnectedUserId} just left`,
+      });
+      console.log("activeRooms after disconnecting", activeRooms);
+      console.log("getActiveUsers", getActiveUsers());
+      io.emit("active-users", getActiveUsers());
     });
 
-    io.emit("active-users", handleActiveUsers());
+    io.emit("active-users", getActiveUsers());
   });
 };

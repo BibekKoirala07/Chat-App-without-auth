@@ -28,7 +28,7 @@ chatRoutes.get("/getAllChats/:senderId", async (req, res) => {
       .populate("latestMessage.senderId", "name")
       .sort({ "latestMessage.timeStamp": -1 });
 
-    console.log("chats", chats);
+    // console.log("chats", chats);
 
     return res.json({ success: true, data: chats });
   } catch (error) {
@@ -40,7 +40,7 @@ chatRoutes.get("/getAllChats/:senderId", async (req, res) => {
 chatRoutes.post("/create/:senderId", async (req, res) => {
   const { senderId } = req.params;
   const { members, groupName } = req.body;
-  console.log("senderId", senderId, members, groupName);
+  // console.log("senderId", senderId, members, groupName);
 
   if (!senderId || !members || !groupName) {
     return res
@@ -93,7 +93,7 @@ chatRoutes.get("/getAllMessages/:chatId", async (req, res) => {
       "name"
     );
 
-    console.log("messages", messages);
+    // console.log("messages", messages);
 
     return res.json({ success: true, data: messages });
   } catch (error) {

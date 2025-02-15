@@ -20,8 +20,8 @@ const AddGroupModal: React.FC<AddGroupModalProps> = ({
     if (newGroupName.trim() && selectedUsers.length) {
       console.log("heres", newGroupName, selectedUsers);
       handleCreateGroup(newGroupName, selectedUsers);
-      setNewGroupName(""); // Clear input after submission
-      setSelectedUsers([]); // Clear selected users
+      setNewGroupName("");
+      setSelectedUsers([]);
     }
   };
 
