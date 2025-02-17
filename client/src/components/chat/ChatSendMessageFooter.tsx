@@ -4,13 +4,13 @@ import { useParams } from "react-router-dom";
 
 import EmojiPicker from "emoji-picker-react";
 
-function EmojiPickerComponent() {
-  return (
-    <div>
-      <EmojiPicker />
-    </div>
-  );
-}
+// function EmojiPickerComponent() {
+//   return (
+//     <div>
+//       <EmojiPicker />
+//     </div>
+//   );
+// }
 
 const ChatSendMessageFooter = ({
   isTyping,

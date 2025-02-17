@@ -9,6 +9,7 @@ import GroupSendMessageFooter from "./groups/GroupSendMessageFooter";
 
 const GroupContainer = () => {
   const [page, setPage] = useState<number>(1);
+  console.log("pge", page);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
