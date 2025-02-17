@@ -8,7 +8,7 @@ const GroupSendMessageFooter = () => {
   const { socket, user } = useSocket();
 
   const sendMessage = () => {
-    console.log("messageText", messageText);
+    // console.log("messageText", messageText);
     const groupMessage = {
       groupId,
       content: messageText,

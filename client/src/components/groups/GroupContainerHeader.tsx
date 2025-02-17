@@ -5,7 +5,7 @@ const GroupContainerHeader = ({
   groupInfo: any;
   groupActiveMembers: string[];
 }) => {
-  console.log("grooupActiveMembers", groupActiveMembers);
+  // console.log("grooupActiveMembers", groupActiveMembers);
   if (!groupInfo) return null;
   const onlineMembers =
     groupInfo.members?.filter((member: string) =>

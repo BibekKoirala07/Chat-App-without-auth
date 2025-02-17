@@ -17,7 +17,7 @@ const GroupContainer = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  console.log("page", page);
+  // console.log("page", page);
 
   const [hasMore, setHasMore] = useState(true);
 
@@ -25,7 +25,7 @@ const GroupContainer = () => {
 
   const [groupActiveMembers, setGroupActiveMembers] = useState<string[]>([]);
 
-  console.log("groupActiveMembers", groupActiveMembers);
+  // console.log("groupActiveMembers", groupActiveMembers);
 
   const { socket, user } = useSocket();
 
@@ -43,14 +43,14 @@ const GroupContainer = () => {
       socket.on(
         "room-joined",
         (data: { message: string; groupId: string; members: string[] }) => {
-          console.log("message in room-joined", data.message);
+          // console.log("message in room-joined", data.message);
           setGroupActiveMembers(data.members);
         }
       );
 
       socket.on("room-joined-notice", (data: any) => {
         setGroupActiveMembers(data.members);
-        console.log("data in room-joined-notice", data);
+        // console.log("data in room-joined-notice", data);
       });
 
       socket.on("room-left-notice", (data: { members: string[] }) => {
@@ -66,11 +66,11 @@ const GroupContainer = () => {
 
   useEffect(() => {
     const handleReceiveGroupMessage = (data: any) => {
-      console.log("Data in receive-group-message:", data);
+      // console.log("Data in receive-group-message:", data);
       const { message } = data;
       if (message.chatId._id.toString() === groupId?.toString()) {
         setGroupMessages((prevMessages: any[]) => [...prevMessages, message]);
-        console.log("Message added to group chat");
+        // console.log("Message added to group chat");
       }
     };
     socket?.on("receive-group-message", handleReceiveGroupMessage);
@@ -86,10 +86,10 @@ const GroupContainer = () => {
         const { data, pagination } = messageData;
         const { totalPages, currentPage } = pagination;
         const orderedMessages = [...data].reverse();
-        console.log("totalPages", totalPages, currentPage);
+        // console.log("totalPages", totalPages, currentPage);
         if (currentPage == 1) {
           setGroupMessages(orderedMessages);
-          console.log("currentPage", currentPage);
+          // console.log("currentPage", currentPage);
           setTimeout(scrollToBottom, 20);
         } else {
           setGroupMessages((prevMessages) => [
@@ -100,7 +100,7 @@ const GroupContainer = () => {
         setHasMore(currentPage < totalPages);
       }
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      // console.error("Error fetching messages:", error);
     }
   };
 
@@ -145,7 +145,7 @@ const GroupContainer = () => {
 
   if (!groupId) return null;
 
-  console.log("group", group);
+  // console.log("group", group);
 
   return (
     <div className="flex flex-col h-screen bg-gray-900">

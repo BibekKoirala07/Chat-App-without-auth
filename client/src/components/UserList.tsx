@@ -28,7 +28,7 @@ const UserList = ({
   const [isModalOpen, setIsModalOpen] = useState(false); // To control modal visibility
 
   const handleCreateGroup = async (groupName: string, members: string[]) => {
-    console.log("Creating group:", groupName, members);
+    // console.log("Creating group:", groupName, members);
     const url = `${backendUrl}/api/chats/create/${user?._id}`;
     try {
       const response = await fetch(url, {
@@ -39,7 +39,7 @@ const UserList = ({
         body: JSON.stringify({ groupName, members }),
       });
       const data = await response.json();
-      console.log("data", data);
+      // console.log("data", data);
       if (response.ok) {
         setGroups((prevState: any[]) => [...prevState, data.data]);
       }
@@ -49,13 +49,13 @@ const UserList = ({
     setIsModalOpen(false);
   };
 
-  console.log("users", users);
+  // console.log("users", users);
 
   useEffect(() => {
     if (!socket) return;
 
     socket.on("receive-user-message-for-user-list", (data: any) => {
-      console.log("receive-user-message-for-user-list", data);
+      // console.log("receive-user-message-for-user-list", data);
       const { savedMessage, senderId, receiverId } = data;
       setUsers((prevState: any) => {
         return prevState.map((each: any) => {
@@ -67,7 +67,7 @@ const UserList = ({
       });
     });
     socket.on("receive-group-message-for-group-list", (data: any) => {
-      console.log("receive-group-message-for-group-list", data);
+      // console.log("receive-group-message-for-group-list", data);
       const { chat } = data;
       setGroups((prevState: any[]) => {
         return prevState.map((each: any) => {

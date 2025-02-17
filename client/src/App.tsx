@@ -11,9 +11,9 @@ const backendURL =
     ? import.meta.env.VITE_PROD_BACKEND_URI
     : import.meta.env.VITE_DEV_BACKEND_URI;
 
-console.log(import.meta.env);
+// console.log(import.meta.env);
 
-console.log("backendURl", backendURL);
+// console.log("backendURl", backendURL);
 
 const App = () => {
   const { user } = useSocket();

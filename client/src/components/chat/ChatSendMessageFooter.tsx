@@ -30,12 +30,12 @@ const ChatSendMessageFooter = ({
     if (!socket) return;
     if (messageText.trim()) {
       if (!isTyping) {
-        setIsTyping(true);
+        // setIsTyping(true);
         socket.emit("typing", { senderId: user?.name, receiverId: userId });
       }
     } else {
       if (isTyping) {
-        setIsTyping(false);
+        // setIsTyping(false);
         socket.emit("stop-typing", {
           senderId: user?.name,
           receiverId: userId,
