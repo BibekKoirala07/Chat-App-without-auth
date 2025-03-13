@@ -103,6 +103,7 @@ const UserList = ({
           <ExternalLink className="w-5 h-5 text-gray-600" />
         </button>
       </div>
+
       <div className="mt-6 relative">
         <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
         <input
@@ -140,8 +141,9 @@ const UserList = ({
           Groups
         </button>
       </div>
+
       {friendsOrGroup == "Friends" && (
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 overflow-auto h-[400px] space-y-4">
           {filteredUsers.map((user: any) => (
             <Link
               to={"/chat/" + user._id}
@@ -181,7 +183,7 @@ const UserList = ({
                   {user.name}
                 </h2>
                 <p className="text-sm text-gray-500 truncate">
-                  {user.latestMessage.content}
+                  {user.latestMessage?.content || "content not available"}
                 </p>
               </div>
             </Link>
@@ -201,7 +203,7 @@ const UserList = ({
       )}
 
       {friendsOrGroup == "Groups" && (
-        <div className="mt-6 space-y-4">
+        <div className="mt-6  h-[400px] overflow-auto space-y-4">
           {filteredGroups.map((group: any) => (
             <Link
               to={"/group/" + group._id}
@@ -248,6 +250,7 @@ const UserList = ({
           ))}
         </div>
       )}
+
       <AddGroupModal
         users={users}
         isModalOpen={isModalOpen}
