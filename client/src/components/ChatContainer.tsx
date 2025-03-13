@@ -20,6 +20,8 @@ const ChatContainer = () => {
   const [isTyping, setIsTyping] = useState(false);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  console.log("page", page);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -73,6 +75,7 @@ const ChatContainer = () => {
     socket.on("user-typing", (data: any) => {
       const { receiverId, isTyping } = data;
       if (receiverId == user?._id) {
+        console.log("isTyping", isTyping);
         // setIsTyping(isTyping);
       }
     });
@@ -124,12 +127,12 @@ const ChatContainer = () => {
   if (!userId) return null;
   if (!user?._id) return null;
 
-  useEffect(() => {
-    if (isTyping) {
-      const typingSound = new Audio("/typing.mp3"); // Path to your typing sound file
-      // typingSound.play();
-    }
-  }, [isTyping]);
+  // useEffect(() => {
+  //   // if (isTyping) {
+  //   //   // const typingSound = new Audio("/typing.mp3"); // Path to your typing sound file
+  //   //   // typingSound.play();
+  //   // }
+  // }, [isTyping]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-900">

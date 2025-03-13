@@ -6,11 +6,6 @@ import EmptyChat from "./components/EmptyChat";
 import ChatContainer from "./components/ChatContainer";
 import GroupContainer from "./components/GroupContainer";
 
-const backendURL =
-  import.meta.env.MODE == "production"
-    ? import.meta.env.VITE_PROD_BACKEND_URI
-    : import.meta.env.VITE_DEV_BACKEND_URI;
-
 // console.log(import.meta.env);
 
 // console.log("backendURl", backendURL);
