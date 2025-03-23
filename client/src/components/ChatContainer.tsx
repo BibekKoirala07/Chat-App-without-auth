@@ -135,14 +135,14 @@ const ChatContainer = () => {
   // }, [isTyping]);
 
   return (
-    <div className="flex flex-col max-h-screen max-w-screen bg-gray-900">
+    <div className="flex flex-col h-screen max-w-screen bg-gray-900">
       <div className="flex-none">
         <ChatContainerHeader chatUser={chatUser} />
       </div>
 
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto  custom-scrollbar p-4 space-y-0"
+        className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-0"
       >
         {hasMore && (
           <div className="flex justify-center items-center py-4">
