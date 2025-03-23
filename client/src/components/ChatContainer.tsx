@@ -135,7 +135,7 @@ const ChatContainer = () => {
   // }, [isTyping]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900">
+    <div className="flex flex-col max-h-screen max-w-screen bg-gray-900">
       <div className="flex-none">
         <ChatContainerHeader chatUser={chatUser} />
       </div>
