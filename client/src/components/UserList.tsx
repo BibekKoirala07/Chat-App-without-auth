@@ -96,7 +96,7 @@ const UserList = ({
 
   console.log("filteredGoupso", filteredGroups);
   return (
-    <div className="p-2 sm:p-6 h-screen  flex flex-col  rounded-l shadow-lg">
+    <div className="p-4 sm:p-6 h-screen  flex flex-col  rounded-l shadow-lg">
       <div>
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">Chats</h1>

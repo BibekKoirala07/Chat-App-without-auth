@@ -136,7 +136,7 @@ const ChatContainer = () => {
 
   return (
     <div className="flex flex-col h-screen  max-w-screen bg-gray-900">
-      <div className="flex-none">
+      <div className="flex-none fixed">
         <ChatContainerHeader chatUser={chatUser} />
       </div>
 
