@@ -73,7 +73,7 @@ const ChatSendMessageFooter = ({
   return (
     <div className="p-4 relative border-t border-gray-800" onClick={() => {}}>
       <div className="flex items-center gap-4">
-        <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+        {/* <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
           <svg
             className="w-5 h-5 text-gray-400"
             fill="none"
@@ -87,7 +87,7 @@ const ChatSendMessageFooter = ({
               d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
             />
           </svg>
-        </button>
+        </button> */}
         <input
           type="text"
           placeholder="Type your message..."
@@ -104,7 +104,7 @@ const ChatSendMessageFooter = ({
             messageText.length >= highestMessageLength
               ? " focus:ring-red-500 focus:border-red-500"
               : "border-transparent"
-          } flex-1 bg-gray-800 rounded-full px-4 py-2 text-white placeholder-gray-400 
+          } flex-1 bg-gray-800 text-sm rounded-full px-3 py-2 text-white placeholder-gray-400 
                       focus:outline-none focus:ring-2 transition-all duration-200 border-2`}
         />
 
@@ -116,10 +116,10 @@ const ChatSendMessageFooter = ({
 
         <button
           onClick={() => setIsEmojiPickerVisible((prevState) => !prevState)}
-          className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+          className="p-2 hidden sm:hidden hover:bg-gray-800 rounded-full transition-colors"
         >
           <svg
-            className="w-5 h-5 text-gray-400"
+            className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -139,7 +139,7 @@ const ChatSendMessageFooter = ({
           className="p-2 bg-blue-600 disabled:bg-gray-600 hover:bg-blue-700 rounded-full transition-colors"
         >
           <svg
-            className="w-5 h-5 text-white"
+            className="w-3 h-3 sm:w-5 sm:h-5 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
