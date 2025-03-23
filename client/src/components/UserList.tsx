@@ -96,50 +96,52 @@ const UserList = ({
 
   console.log("filteredGoupso", filteredGroups);
   return (
-    <div className="p-6  rounded-lg h-screen shadow-lg">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Chats</h1>
-        <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <ExternalLink className="w-5 h-5 text-gray-600" />
-        </button>
-      </div>
+    <div className="p-6 h-screen flex flex-col  rounded-l shadow-lg">
+      <div>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-800">Chats</h1>
+          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ExternalLink className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
 
-      <div className="mt-6 relative">
-        <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-        <input
-          className="w-full bg-gray-100 p-3 pl-12 pr-4 rounded-lg 
+        <div className="mt-6 relative">
+          <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+          <input
+            className="w-full bg-gray-100 p-3 pl-12 pr-4 rounded-lg 
                      placeholder:text-gray-500 focus:outline-none 
                      focus:ring-2 focus:ring-blue-500 transition-all"
-          placeholder="Search..."
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+            placeholder="Search..."
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-      <div className="flex gap-2 mt-6">
-        <button
-          onClick={() => setFriendsOrGroup("Friends")}
-          className={`flex-1 p-3 cursor-pointer rounded-lg font-medium transition-colors
+        <div className="flex gap-2 mt-6">
+          <button
+            onClick={() => setFriendsOrGroup("Friends")}
+            className={`flex-1 p-3 cursor-pointer rounded-lg font-medium transition-colors
                      ${
                        friendsOrGroup == "Friends"
                          ? "bg-blue-600 text-white"
                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                      }`}
-        >
-          Friends
-        </button>
-        <button
-          onClick={() => setFriendsOrGroup("Groups")}
-          className={`flex-1 p-3 cursor-pointer rounded-lg font-medium transition-colors
+          >
+            Friends
+          </button>
+          <button
+            onClick={() => setFriendsOrGroup("Groups")}
+            className={`flex-1 p-3 cursor-pointer rounded-lg font-medium transition-colors
                      ${
                        friendsOrGroup == "Groups"
                          ? "bg-blue-600 text-white"
                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                      }`}
-        >
-          Groups
-        </button>
+          >
+            Groups
+          </button>
+        </div>
       </div>
 
       {friendsOrGroup == "Friends" && (
@@ -203,7 +205,7 @@ const UserList = ({
       )}
 
       {friendsOrGroup == "Groups" && (
-        <div className="mt-6  h-[400px] overflow-auto space-y-4">
+        <div className="mt-6 flex-1  h-[400px] overflow-auto space-y-4">
           {filteredGroups.map((group: any) => (
             <Link
               to={"/group/" + group._id}
