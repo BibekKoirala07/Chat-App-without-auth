@@ -96,7 +96,7 @@ const UserList = ({
 
   console.log("filteredGoupso", filteredGroups);
   return (
-    <div className="p-6 h-screen flex flex-col  rounded-l shadow-lg">
+    <div className="p-6 h-screen  flex flex-col  rounded-l shadow-lg">
       <div>
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">Chats</h1>
@@ -118,7 +118,7 @@ const UserList = ({
           />
         </div>
 
-        <div className="flex gap-2 mt-6">
+        <div className="flex  gap-2 mt-6">
           <button
             onClick={() => setFriendsOrGroup("Friends")}
             className={`flex-1 p-3 cursor-pointer rounded-lg font-medium transition-colors
@@ -145,7 +145,7 @@ const UserList = ({
       </div>
 
       {friendsOrGroup == "Friends" && (
-        <div className="mt-6 overflow-auto h-[400px] space-y-4">
+        <div className="mt-6 overflow-auto flex-1 space-y-4">
           {filteredUsers.map((user: any) => (
             <Link
               to={"/chat/" + user._id}
@@ -205,7 +205,7 @@ const UserList = ({
       )}
 
       {friendsOrGroup == "Groups" && (
-        <div className="mt-6 flex-1  h-[400px] overflow-auto space-y-4">
+        <div className="mt-6  flex-1  overflow-auto space-y-4">
           {filteredGroups.map((group: any) => (
             <Link
               to={"/group/" + group._id}
